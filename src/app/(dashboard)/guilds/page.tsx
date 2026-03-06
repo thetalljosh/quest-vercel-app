@@ -5,8 +5,12 @@ import {
   createGuildAction,
   rejectGuildJoinRequestAction,
   requestJoinGuildAction,
+  setGuildMemberRoleAction,
 } from "./actions";
-import { getGuildDashboardData } from "@/features/guilds/lib/queries";
+import {
+  getCreatorGuildMemberRoster,
+  getGuildDashboardData,
+} from "@/features/guilds/lib/queries";
 import { GUILD_CREST_LABELS, GUILD_CREST_PRESETS } from "@/shared/lib/constants";
 import { GuildCrest } from "@/features/guilds/components/GuildCrest";
 
@@ -26,6 +30,7 @@ export default async function GuildsPage({ searchParams }: GuildsPageProps) {
   const creatorFilter = params.creator ?? "all";
 
   const data = await getGuildDashboardData(session.user.id);
+  const creatorGuildRosters = await getCreatorGuildMemberRoster(userId);
 
   const filteredGuilds = data.myGuilds.filter((guild) => {
     if (creatorFilter === "self") {
@@ -179,6 +184,60 @@ export default async function GuildsPage({ searchParams }: GuildsPageProps) {
           )}
         </div>
       </div>
+
+      {creatorGuildRosters.length > 0 && (
+        <div className="parchment-card rounded-xl p-5">
+          <h2 className="rpg-heading text-xl">Admin Role Management</h2>
+          <p className="mt-1 text-sm text-[var(--muted-text)]">
+            As creator, you can promote members to admin or demote admins back to member.
+          </p>
+          <div className="ornamental-divider my-3" />
+
+          <div className="space-y-4">
+            {creatorGuildRosters.map((guild) => (
+              <div key={guild.id} className="parchment-sunken rounded-lg p-3">
+                <div className="mb-3 flex items-center gap-2">
+                  <GuildCrest preset={guild.crestPreset} size="sm" />
+                  <p className="rpg-heading text-lg">{guild.name}</p>
+                </div>
+
+                <ul className="space-y-2">
+                  {guild.members.map((member) => (
+                    <li
+                      key={member.userId}
+                      className="flex items-center justify-between rounded-md border border-[var(--border)] px-3 py-2"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {member.userName ?? member.userEmail}
+                        </p>
+                        <p className="text-xs text-[var(--muted-text)]">
+                          {member.userEmail} • {member.role}
+                        </p>
+                      </div>
+
+                      {member.role !== "creator" && (
+                        <form action={setGuildMemberRoleAction}>
+                          <input type="hidden" name="guildId" value={guild.id} />
+                          <input type="hidden" name="memberUserId" value={member.userId} />
+                          <input
+                            type="hidden"
+                            name="role"
+                            value={member.role === "admin" ? "member" : "admin"}
+                          />
+                          <button type="submit" className="rpg-button px-3 py-1.5 text-xs">
+                            {member.role === "admin" ? "Demote to Member" : "Promote to Admin"}
+                          </button>
+                        </form>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

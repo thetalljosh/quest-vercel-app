@@ -185,6 +185,55 @@ export async function rejectGuildJoinRequestAction(formData: FormData) {
   revalidatePath("/guilds");
 }
 
+export async function setGuildMemberRoleAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const guildId = String(formData.get("guildId") ?? "");
+  const memberUserId = String(formData.get("memberUserId") ?? "");
+  const role = String(formData.get("role") ?? "") as "admin" | "member";
+
+  if (!guildId || !memberUserId) {
+    throw new Error("Guild and member are required");
+  }
+
+  if (role !== "admin" && role !== "member") {
+    throw new Error("Invalid role");
+  }
+
+  const [guild] = await db
+    .select({ creatorId: guilds.creatorId })
+    .from(guilds)
+    .where(eq(guilds.id, guildId))
+    .limit(1);
+
+  if (!guild) throw new Error("Guild not found");
+  if (guild.creatorId !== session.user.id) {
+    throw new Error("Only the guild creator can manage admin roles");
+  }
+
+  if (memberUserId === guild.creatorId) {
+    throw new Error("Cannot modify creator role");
+  }
+
+  const [member] = await db
+    .select({ id: guildMembers.id })
+    .from(guildMembers)
+    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, memberUserId)))
+    .limit(1);
+
+  if (!member) {
+    throw new Error("Guild member not found");
+  }
+
+  await db
+    .update(guildMembers)
+    .set({ role })
+    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, memberUserId)));
+
+  revalidatePath("/guilds");
+}
+
 export async function approveGuildJoinRequestByToken(
   requestId: string,
   token: string

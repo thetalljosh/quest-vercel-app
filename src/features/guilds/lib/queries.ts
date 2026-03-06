@@ -5,7 +5,7 @@ import {
   guildJoinRequests,
   users,
 } from "@/shared/db/schema";
-import { and, desc, eq, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import type { GuildOption } from "@/features/guilds/types";
 import type { GuildCrestPreset } from "@/shared/lib/constants";
 
@@ -153,4 +153,48 @@ export async function getUserGuildRole(userId: string, guildId: string) {
     .limit(1);
 
   return row?.role ?? null;
+}
+
+export async function getCreatorGuildMemberRoster(creatorUserId: string) {
+  const creatorGuilds = await db
+    .select({
+      id: guilds.id,
+      name: guilds.name,
+      crestPreset: guilds.crestPreset,
+    })
+    .from(guilds)
+    .where(eq(guilds.creatorId, creatorUserId))
+    .orderBy(desc(guilds.createdAt));
+
+  if (!creatorGuilds.length) {
+    return [];
+  }
+
+  const guildIds = creatorGuilds.map((guild) => guild.id);
+
+  const memberRows = await db
+    .select({
+      guildId: guildMembers.guildId,
+      userId: guildMembers.userId,
+      role: guildMembers.role,
+      userName: users.name,
+      userEmail: users.email,
+    })
+    .from(guildMembers)
+    .innerJoin(users, eq(guildMembers.userId, users.id))
+    .where(inArray(guildMembers.guildId, guildIds));
+
+  return creatorGuilds.map((guild) => ({
+    id: guild.id,
+    name: guild.name,
+    crestPreset: guild.crestPreset as GuildCrestPreset,
+    members: memberRows
+      .filter((member) => member.guildId === guild.id)
+      .map((member) => ({
+        userId: member.userId,
+        role: member.role,
+        userName: member.userName,
+        userEmail: member.userEmail,
+      })),
+  }));
 }
