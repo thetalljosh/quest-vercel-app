@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import Nodemailer from "next-auth/providers/nodemailer";
 import { db } from "@/shared/db/client";
 import {
   users,
@@ -10,7 +11,20 @@ import {
 } from "@/shared/db/schema";
 import authConfig from "./auth.config";
 
+// Nodemailer depends on Node.js 'stream' so it must live here
+// (Node.js runtime), NOT in auth.config.ts (Edge runtime).
+const nodemailerProvider = process.env.EMAIL_SERVER
+  ? [
+      Nodemailer({
+        server: process.env.EMAIL_SERVER,
+        from: process.env.EMAIL_FROM,
+      }),
+    ]
+  : [];
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  providers: [...authConfig.providers, ...nodemailerProvider],
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
@@ -44,5 +58,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
     },
   },
-  ...authConfig,
 });
