@@ -4,17 +4,26 @@ import { useEffect, useMemo, useState } from "react";
 import type { Quest } from "@/features/quests/types";
 import { formatDate } from "@/shared/lib/utils";
 import {
+  QUEST_PRIORITIES,
   KANBAN_CLOSED_COLUMNS,
   QUEST_STATUS_LABELS,
+  QUEST_TYPES,
   QUEST_TYPE_LABELS,
   QUEST_TYPE_ICONS,
   PRIORITY_LABELS,
+  type QuestPriority,
   type QuestStatus,
+  type QuestType,
 } from "@/shared/lib/constants";
 
 interface QuestLogViewProps {
   quests: Quest[];
   onMoveQuest: (questId: string, newStatus: QuestStatus) => void;
+  onUpdateQuestMeta?: (
+    questId: string,
+    questType: QuestType,
+    priority: QuestPriority
+  ) => void;
 }
 
 const STATUS_ACTIONS: QuestStatus[] = [
@@ -27,7 +36,11 @@ const STATUS_ACTIONS: QuestStatus[] = [
 
 type QuestLogTab = "current" | "archive";
 
-export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
+export function QuestLogView({
+  quests,
+  onMoveQuest,
+  onUpdateQuestMeta,
+}: QuestLogViewProps) {
   const [activeTab, setActiveTab] = useState<QuestLogTab>("current");
   const [selectedId, setSelectedId] = useState<string | null>(quests[0]?.id ?? null);
 
@@ -152,6 +165,52 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
                 value={selectedQuest.dueDate ? formatDate(selectedQuest.dueDate) : "None"}
               />
             </div>
+
+            {onUpdateQuestMeta && (
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="rpg-subhead">
+                  Type
+                  <select
+                    value={selectedQuest.questType}
+                    onChange={(event) =>
+                      onUpdateQuestMeta(
+                        selectedQuest.id,
+                        event.target.value as QuestType,
+                        selectedQuest.priority
+                      )
+                    }
+                    className="rpg-select mt-1"
+                  >
+                    {QUEST_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {QUEST_TYPE_LABELS[type]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rpg-subhead">
+                  Priority
+                  <select
+                    value={selectedQuest.priority}
+                    onChange={(event) =>
+                      onUpdateQuestMeta(
+                        selectedQuest.id,
+                        selectedQuest.questType,
+                        event.target.value as QuestPriority
+                      )
+                    }
+                    className="rpg-select mt-1"
+                  >
+                    {QUEST_PRIORITIES.map((priority) => (
+                      <option key={priority} value={priority}>
+                        {PRIORITY_LABELS[priority]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
 
             <div className="mt-6 flex flex-wrap gap-2">
               {STATUS_ACTIONS.map((status) => (

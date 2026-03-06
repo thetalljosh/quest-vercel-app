@@ -1,32 +1,20 @@
 "use client";
 
-import { useTransition } from "react";
 import type { Quest } from "@/features/quests/types";
 import {
-  QUEST_PRIORITIES,
-  QUEST_TYPES,
   QUEST_TYPE_LABELS,
   QUEST_TYPE_COLORS,
   QUEST_TYPE_ICONS,
   PRIORITY_LABELS,
-  type QuestPriority,
-  type QuestType,
 } from "@/shared/lib/constants";
 import { formatDate } from "@/shared/lib/utils";
 import { GuildCrest } from "@/features/guilds/components/GuildCrest";
 
 interface QuestCardProps {
   quest: Quest;
-  onUpdateQuestMeta?: (
-    questId: string,
-    questType: QuestType,
-    priority: QuestPriority
-  ) => void;
 }
 
-export function QuestCard({ quest, onUpdateQuestMeta }: QuestCardProps) {
-  const [isPending, startTransition] = useTransition();
-
+export function QuestCard({ quest }: QuestCardProps) {
   const edgeColors: Record<Quest["questType"], string> = {
     main: "#c89022",
     character: "#7b4aa3",
@@ -35,14 +23,6 @@ export function QuestCard({ quest, onUpdateQuestMeta }: QuestCardProps) {
     side: "#3159b9",
     commission: "#6d5a44",
   };
-
-  function updateMeta(nextQuestType: QuestType, nextPriority: QuestPriority) {
-    if (!onUpdateQuestMeta) return;
-
-    startTransition(() => {
-      onUpdateQuestMeta(quest.id, nextQuestType, nextPriority);
-    });
-  }
 
   return (
     <div
@@ -69,46 +49,6 @@ export function QuestCard({ quest, onUpdateQuestMeta }: QuestCardProps) {
         <PriorityBadge priority={quest.priority} />
         <ScopeBadge quest={quest} />
       </div>
-
-      {onUpdateQuestMeta && (
-        <div
-          className="mt-2 grid grid-cols-2 gap-2"
-          onPointerDown={(event) => event.stopPropagation()}
-          onMouseDown={(event) => event.stopPropagation()}
-        >
-          <label className="rpg-subhead col-span-1">
-            Type
-            <select
-              value={quest.questType}
-              onChange={(event) => updateMeta(event.target.value as QuestType, quest.priority)}
-              className="rpg-select mt-1"
-              disabled={isPending}
-            >
-              {QUEST_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {QUEST_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="rpg-subhead col-span-1">
-            Priority
-            <select
-              value={quest.priority}
-              onChange={(event) => updateMeta(quest.questType, event.target.value as QuestPriority)}
-              className="rpg-select mt-1"
-              disabled={isPending}
-            >
-              {QUEST_PRIORITIES.map((priority) => (
-                <option key={priority} value={priority}>
-                  {PRIORITY_LABELS[priority]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      )}
 
       {quest.dueDate && (
         <p className="mt-2 text-xs text-[var(--muted-text)]">

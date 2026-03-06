@@ -273,7 +273,11 @@ export function QuestLogWrapper({
       )}
 
       {view === "log" ? (
-        <QuestLogView quests={visibleByScope} onMoveQuest={handleMoveQuest} />
+        <QuestLogView
+          quests={visibleByScope}
+          onMoveQuest={handleMoveQuest}
+          onUpdateQuestMeta={handleUpdateQuestMeta}
+        />
       ) : (
         <KanbanBoard
           quests={
@@ -282,7 +286,6 @@ export function QuestLogWrapper({
               : visibleByScope.filter((q) => !KANBAN_CLOSED_COLUMNS.includes(q.status))
           }
           onMoveQuest={handleMoveQuest}
-          onUpdateQuestMeta={handleUpdateQuestMeta}
           showClosed={showClosed}
         />
       )}

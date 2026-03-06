@@ -15,23 +15,17 @@ import {
   KANBAN_CLOSED_COLUMNS,
   QUEST_STATUS_LABELS,
 } from "@/shared/lib/constants";
-import type { QuestPriority, QuestStatus, QuestType } from "@/shared/lib/constants";
+import type { QuestStatus } from "@/shared/lib/constants";
 
 interface KanbanBoardProps {
   quests: Quest[];
   onMoveQuest: (questId: string, newStatus: QuestStatus) => void;
-  onUpdateQuestMeta?: (
-    questId: string,
-    questType: QuestType,
-    priority: QuestPriority
-  ) => void;
   showClosed?: boolean;
 }
 
 export function KanbanBoard({
   quests,
   onMoveQuest,
-  onUpdateQuestMeta,
   showClosed = false,
 }: KanbanBoardProps) {
   const sensors = useSensors(
@@ -72,7 +66,6 @@ export function KanbanBoard({
             status={status}
             title={QUEST_STATUS_LABELS[status]}
             quests={quests.filter((q) => q.status === status)}
-            onUpdateQuestMeta={onUpdateQuestMeta}
           />
         ))}
       </div>

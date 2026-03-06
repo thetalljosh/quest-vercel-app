@@ -3,25 +3,15 @@
 import { useDroppable } from "@dnd-kit/core";
 import { DraggableQuestCard } from "./DraggableQuestCard";
 import type { Quest } from "@/features/quests/types";
-import type { QuestPriority, QuestStatus, QuestType } from "@/shared/lib/constants";
+import type { QuestStatus } from "@/shared/lib/constants";
 
 interface KanbanColumnProps {
   status: QuestStatus;
   title: string;
   quests: Quest[];
-  onUpdateQuestMeta?: (
-    questId: string,
-    questType: QuestType,
-    priority: QuestPriority
-  ) => void;
 }
 
-export function KanbanColumn({
-  status,
-  title,
-  quests,
-  onUpdateQuestMeta,
-}: KanbanColumnProps) {
+export function KanbanColumn({ status, title, quests }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const statusIcons: Record<QuestStatus, string> = {
     backlog: "🗂️",
@@ -50,11 +40,7 @@ export function KanbanColumn({
 
       <div className="flex flex-col gap-2">
         {quests.map((quest) => (
-          <DraggableQuestCard
-            key={quest.id}
-            quest={quest}
-            onUpdateQuestMeta={onUpdateQuestMeta}
-          />
+          <DraggableQuestCard key={quest.id} quest={quest} />
         ))}
       </div>
     </div>
