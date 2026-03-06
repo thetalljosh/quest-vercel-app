@@ -1,26 +1,187 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3e6ca;
+  --surface: #efe0bf;
+  --surface-elevated: #f9f0dc;
+  --surface-sunken: #e2cfaa;
+  --foreground: #2f2217;
+  --muted-text: #6d5a44;
+  --border: #9b8464;
+  --accent: #c89022;
+  --accent-hover: #ab7417;
+  --accent-muted: #f4dcaa;
+  --accent-text: #3d2b10;
+  --font-body: var(--font-eb-garamond);
+  --font-heading: var(--font-cinzel);
+}
+
+[data-theme="dark"] {
+  --background: #1b1611;
+  --surface: #29231b;
+  --surface-elevated: #342c22;
+  --surface-sunken: #242018;
+  --foreground: #e5d7bc;
+  --muted-text: #a88f6d;
+  --border: #6f5a3f;
+  --accent-muted: #43341a;
+  --accent-text: #f3dfb0;
+}
+
+[data-accent="gold"] {
+  --accent: #c89022;
+  --accent-hover: #ab7417;
+}
+
+[data-accent="crimson"] {
+  --accent: #a8352e;
+  --accent-hover: #8f2924;
+}
+
+[data-accent="royal"] {
+  --accent: #3159b9;
+  --accent-hover: #284ba0;
+}
+
+[data-accent="emerald"] {
+  --accent: #2f8c5a;
+  --accent-hover: #277249;
+}
+
+[data-accent="amethyst"] {
+  --accent: #7b4aa3;
+  --accent-hover: #653c86;
+}
+
+[data-font="serif"] {
+  --font-body: var(--font-eb-garamond);
+  --font-heading: var(--font-cinzel);
+}
+
+[data-font="sans"] {
+  --font-body: var(--font-geist-sans);
+  --font-heading: var(--font-geist-sans);
+}
+
+[data-font="dyslexic"] {
+  --font-body: var(--font-lexend);
+  --font-heading: var(--font-lexend);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), serif;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), serif;
+}
+
+.rpg-heading {
+  font-family: var(--font-heading), serif;
+  color: var(--foreground);
+  letter-spacing: 0.02em;
+}
+
+.rpg-subhead {
+  font-family: var(--font-heading), serif;
+  color: var(--muted-text);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.parchment-card {
+  background: linear-gradient(180deg, var(--surface-elevated), var(--surface));
+  border: 1px solid var(--border);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 35%, transparent),
+    0 8px 18px color-mix(in srgb, #000 12%, transparent);
+}
+
+.parchment-sunken {
+  background: linear-gradient(180deg, var(--surface), var(--surface-sunken));
+  border: 1px solid var(--border);
+}
+
+.ornamental-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--border) 50%, transparent),
+    var(--accent),
+    color-mix(in srgb, var(--border) 50%, transparent),
+    transparent
+  );
+}
+
+.rpg-input,
+.rpg-select,
+.rpg-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-elevated) 92%, #fff 8%);
+  color: var(--foreground);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.rpg-input:focus,
+.rpg-select:focus,
+.rpg-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.rpg-button {
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, #000 20%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 84%, #fff 16%),
+    var(--accent)
+  );
+  color: var(--accent-text);
+  border-radius: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: filter 160ms ease;
+}
+
+.rpg-button:hover {
+  filter: brightness(0.94);
+}
+
+.rpg-nav {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-sunken) 85%, #000 15%),
+    color-mix(in srgb, var(--surface-sunken) 55%, #000 45%)
+  );
+  border-bottom: 1px solid var(--border);
+}
+
+.rpg-link {
+  color: var(--muted-text);
+  transition: color 150ms ease;
+}
+
+.rpg-link:hover {
+  color: var(--foreground);
 }

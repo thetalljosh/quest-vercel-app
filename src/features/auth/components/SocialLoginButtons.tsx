@@ -14,9 +14,8 @@ export function SocialLoginButtons() {
         <button
           key={id}
           onClick={() => signInWithProvider(id)}
-          className="flex items-center justify-center gap-2 rounded-lg border
-                     border-gray-300 bg-white px-4 py-3 text-sm font-medium
-                     text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+          className="parchment-sunken flex items-center justify-center gap-2 rounded-lg
+                     px-4 py-3 text-sm font-medium text-[var(--foreground)] transition-colors"
         >
           <span>{icon}</span>
           Continue with {label}

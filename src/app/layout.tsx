@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cinzel, EB_Garamond, Geist, Geist_Mono, Lexend } from "next/font/google";
+import { ThemeProvider } from "@/shared/components/ThemeProvider";
+import { ThemePanel } from "@/shared/components/ThemePanel";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -9,6 +11,21 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
+  subsets: ["latin"],
+});
+
+const ebGaramond = EB_Garamond({
+  variable: "--font-eb-garamond",
+  subsets: ["latin"],
+});
+
+const lexend = Lexend({
+  variable: "--font-lexend",
   subsets: ["latin"],
 });
 
@@ -23,11 +40,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${ebGaramond.variable} ${lexend.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider>
+          {children}
+          <ThemePanel />
+        </ThemeProvider>
       </body>
     </html>
   );

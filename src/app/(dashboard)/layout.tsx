@@ -13,10 +13,10 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-gray-200 bg-white px-6 py-3">
+      <nav className="rpg-nav px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/quests" className="text-lg font-bold text-gray-900">
+            <Link href="/quests" className="rpg-heading text-xl text-[var(--accent)]">
               ⚔️ QuestLog
             </Link>
             <NavLink href="/quests">Quests</NavLink>
@@ -24,11 +24,14 @@ export default async function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-[var(--muted-text)]">
               {session.user.name ?? session.user.email}
             </span>
             <SignOutButton />
           </div>
+        </div>
+        <div className="mx-auto mt-3 max-w-6xl">
+          <div className="ornamental-divider" />
         </div>
       </nav>
 
@@ -47,7 +50,7 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+      className="rpg-link text-sm"
     >
       {children}
     </Link>

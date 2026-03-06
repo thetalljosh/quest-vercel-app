@@ -11,15 +11,14 @@ export function XpProgressBar({ currentXp, nextLevelXp }: XpProgressBarProps) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-gray-600">Experience</span>
-        <span className="text-gray-500">
+        <span className="font-medium text-[var(--muted-text)]">Experience</span>
+        <span className="text-[var(--muted-text)]">
           {currentXp} / {nextLevelXp} XP
         </span>
       </div>
-      <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
+      <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-sunken)]">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-amber-400
-                     to-amber-600 transition-all"
+          className="h-full rounded-full bg-[var(--accent)] transition-all"
           style={{ width: `${percentage}%` }}
         />
       </div>

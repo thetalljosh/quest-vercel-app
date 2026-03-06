@@ -17,16 +17,16 @@ export function KanbanColumn({ status, title, quests }: KanbanColumnProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-[200px] flex-col rounded-xl border p-3
+      className={`flex min-h-[220px] flex-col rounded-xl border p-3
                   transition-colors ${
                     isOver
-                      ? "border-amber-400 bg-amber-50"
-                      : "border-gray-200 bg-gray-50"
+                      ? "border-[var(--accent)] bg-[var(--accent-muted)]"
+                      : "parchment-sunken border-[var(--border)]"
                   }`}
     >
-      <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">
+      <h2 className="rpg-subhead mb-3 text-xs">
         {title}
-        <span className="ml-2 text-gray-400">({quests.length})</span>
+        <span className="ml-2 text-[var(--muted-text)]">({quests.length})</span>
       </h2>
 
       <div className="flex flex-col gap-2">

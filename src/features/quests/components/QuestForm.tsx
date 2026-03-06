@@ -24,18 +24,14 @@ export function QuestForm({ onClose }: { onClose?: () => void }) {
         name="title"
         required
         placeholder="Quest title..."
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm
-                   focus:border-amber-500 focus:outline-none focus:ring-1
-                   focus:ring-amber-500"
+        className="rpg-input"
       />
 
       <textarea
         name="description"
         placeholder="Description (optional)"
         rows={3}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm
-                   focus:border-amber-500 focus:outline-none focus:ring-1
-                   focus:ring-amber-500"
+        className="rpg-textarea"
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -46,13 +42,12 @@ export function QuestForm({ onClose }: { onClose?: () => void }) {
       <input
         name="dueDate"
         type="date"
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        className="rpg-input"
       />
 
       <button
         type="submit"
-        className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium
-                   text-white transition-colors hover:bg-amber-600"
+        className="rpg-button px-4 py-2 text-sm"
       >
         Accept Quest ⚔️
       </button>
@@ -73,10 +68,10 @@ function SelectField<T extends string>({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-gray-500">{label}</label>
+      <label className="rpg-subhead">{label}</label>
       <select
         name={name}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        className="rpg-select"
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>

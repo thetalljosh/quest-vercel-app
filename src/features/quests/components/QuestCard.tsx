@@ -8,12 +8,12 @@ import { formatDate } from "@/shared/lib/utils";
 
 export function QuestCard({ quest }: { quest: Quest }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+    <div className="parchment-card rounded-lg p-3">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-900">
+        <h3 className="rpg-heading text-sm font-semibold">
           {quest.title}
         </h3>
-        <span className="shrink-0 text-xs font-medium text-amber-600">
+        <span className="shrink-0 text-xs font-bold text-[var(--accent)]">
           +{quest.xpReward} XP
         </span>
       </div>
@@ -24,7 +24,7 @@ export function QuestCard({ quest }: { quest: Quest }) {
       </div>
 
       {quest.dueDate && (
-        <p className="mt-2 text-xs text-gray-500">
+        <p className="mt-2 text-xs text-[var(--muted-text)]">
           Due: {formatDate(quest.dueDate)}
         </p>
       )}
@@ -45,8 +45,8 @@ function QuestTypeBadge({ questType }: { questType: Quest["questType"] }) {
 
 function PriorityBadge({ priority }: { priority: Quest["priority"] }) {
   return (
-    <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5
-                     text-[10px] font-medium text-gray-600">
+    <span className="inline-block rounded-full border border-[var(--border)] px-2 py-0.5
+                     text-[10px] font-medium text-[var(--muted-text)]">
       {PRIORITY_LABELS[priority]}
     </span>
   );
