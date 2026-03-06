@@ -29,6 +29,32 @@ export const QUEST_PRIORITIES = [
 
 export type QuestPriority = (typeof QUEST_PRIORITIES)[number];
 
+export const GUILD_ROLES = [
+  "creator",
+  "admin",
+  "member",
+] as const;
+
+export type GuildRole = (typeof GUILD_ROLES)[number];
+
+export const BOARD_SCOPES = [
+  "personal",
+  "guild",
+  "combined",
+] as const;
+
+export type BoardScope = (typeof BOARD_SCOPES)[number];
+
+export const GUILD_CREST_PRESETS = [
+  "lion",
+  "phoenix",
+  "raven",
+  "oak",
+  "wolf",
+] as const;
+
+export type GuildCrestPreset = (typeof GUILD_CREST_PRESETS)[number];
+
 export const QUEST_LOG_ACTIONS = [
   "created",
   "started",
@@ -132,4 +158,12 @@ export const PRIORITY_LABELS: Record<QuestPriority, string> = {
   high: "High",
   moderate: "Moderate",
   low: "Low",
+};
+
+export const GUILD_CREST_LABELS: Record<GuildCrestPreset, string> = {
+  lion: "Lion",
+  phoenix: "Phoenix",
+  raven: "Raven",
+  oak: "Oak",
+  wolf: "Wolf",
 };

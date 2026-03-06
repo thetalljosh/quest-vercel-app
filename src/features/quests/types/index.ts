@@ -2,11 +2,15 @@ import type {
   QuestType,
   QuestStatus,
   QuestPriority,
+  GuildCrestPreset,
 } from "@/shared/lib/constants";
 
 export interface Quest {
   id: string;
   userId: string;
+  guildId?: string | null;
+  guildName?: string | null;
+  guildCrestPreset?: GuildCrestPreset | null;
   title: string;
   description: string | null;
   questType: QuestType;

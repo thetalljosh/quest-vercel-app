@@ -35,6 +35,18 @@ export const questPriorityEnum = pgEnum("quest_priority", [
   "low",
 ]);
 
+export const guildRoleEnum = pgEnum("guild_role", [
+  "creator",
+  "admin",
+  "member",
+]);
+
+export const guildRequestStatusEnum = pgEnum("guild_request_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+
 // ── Auth.js tables (managed by @auth/drizzle-adapter) ──
 // Column names must use snake_case to match adapter expectations.
 
@@ -92,11 +104,51 @@ export const profiles = pgTable("profiles", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
+export const guilds = pgTable("guilds", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 120 }).notNull(),
+  description: text("description"),
+  creatorId: uuid("creator_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  crestPreset: varchar("crest_preset", { length: 40 }).notNull().default("lion"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const guildMembers = pgTable("guild_members", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  guildId: uuid("guild_id")
+    .notNull()
+    .references(() => guilds.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  role: guildRoleEnum("role").notNull().default("member"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const guildJoinRequests = pgTable("guild_join_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  guildId: uuid("guild_id")
+    .notNull()
+    .references(() => guilds.id, { onDelete: "cascade" }),
+  requesterId: uuid("requester_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: guildRequestStatusEnum("status").notNull().default("pending"),
+  token: varchar("token", { length: 255 }),
+  reviewedById: uuid("reviewed_by_id").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
 export const quests = pgTable("quests", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  guildId: uuid("guild_id").references(() => guilds.id, { onDelete: "set null" }),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   questType: questTypeEnum("quest_type").notNull(),

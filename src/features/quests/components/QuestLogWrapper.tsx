@@ -5,15 +5,20 @@ import { KanbanBoard } from "@/features/kanban/components/KanbanBoard";
 import { QuestLogView } from "@/features/quests/components/QuestLogView";
 import type { Quest } from "@/features/quests/types";
 import {
+  BOARD_SCOPES,
   KANBAN_CLOSED_COLUMNS,
+  type BoardScope,
   type QuestPriority,
   type QuestStatus,
   type QuestType,
 } from "@/shared/lib/constants";
 import { calculateXpReward } from "@/features/character/lib/xpEngine";
+import type { GuildOption } from "@/features/guilds/types";
+import { GuildCrest } from "@/features/guilds/components/GuildCrest";
 
 interface QuestLogWrapperProps {
   initialQuests: Quest[];
+  guildOptions: GuildOption[];
   moveAction: (questId: string, newStatus: QuestStatus) => Promise<number>;
   updateMetaAction: (
     questId: string,
@@ -34,14 +39,19 @@ type OptimisticUpdate =
 type QuestView = "log" | "kanban";
 const STORAGE_KEY = "quest-view";
 const CLOSED_KEY = "show-closed-kanban";
+const SCOPE_KEY = "board-scope";
+const GUILD_KEY = "active-guild-id";
 
 export function QuestLogWrapper({
   initialQuests,
+  guildOptions,
   moveAction,
   updateMetaAction,
 }: QuestLogWrapperProps) {
   const [isPending, startTransition] = useTransition();
   const [view, setView] = useState<QuestView>("log");
+  const [scope, setScope] = useState<BoardScope>("combined");
+  const [activeGuildId, setActiveGuildId] = useState<string>(guildOptions[0]?.id ?? "");
   const [showClosed, setShowClosed] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -54,6 +64,16 @@ export function QuestLogWrapper({
     const closedStored = localStorage.getItem(CLOSED_KEY);
     if (closedStored === "true") {
       setShowClosed(true);
+    }
+
+    const storedScope = localStorage.getItem(SCOPE_KEY);
+    if (storedScope === "personal" || storedScope === "guild" || storedScope === "combined") {
+      setScope(storedScope);
+    }
+
+    const storedGuildId = localStorage.getItem(GUILD_KEY);
+    if (storedGuildId) {
+      setActiveGuildId(storedGuildId);
     }
   }, []);
 
@@ -78,6 +98,18 @@ export function QuestLogWrapper({
       );
     }
   );
+
+  const visibleByScope = quests.filter((quest) => {
+    if (scope === "personal") {
+      return !quest.guildId;
+    }
+
+    if (scope === "guild") {
+      return activeGuildId ? quest.guildId === activeGuildId : false;
+    }
+
+    return true;
+  });
 
   function handleMoveQuest(questId: string, newStatus: QuestStatus) {
     const quest = quests.find((item) => item.id === questId);
@@ -184,11 +216,71 @@ export function QuestLogWrapper({
         )}
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {BOARD_SCOPES.map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => {
+              setScope(mode);
+              localStorage.setItem(SCOPE_KEY, mode);
+            }}
+            className={`quest-tab ${scope === mode ? "quest-tab-active" : ""}`}
+          >
+            {mode === "personal" ? "Personal" : mode === "guild" ? "Guild" : "Combined"}
+          </button>
+        ))}
+
+        {scope !== "personal" && guildOptions.length > 0 && (
+          <label className="ml-2 flex items-center gap-2 text-sm">
+            <span className="rpg-subhead">Guild</span>
+            <select
+              value={activeGuildId}
+              onChange={(event) => {
+                setActiveGuildId(event.target.value);
+                localStorage.setItem(GUILD_KEY, event.target.value);
+              }}
+              className="rpg-select min-w-[180px]"
+            >
+              {scope === "combined" && <option value="">All guilds</option>}
+              {guildOptions.map((guild) => (
+                <option key={guild.id} value={guild.id}>
+                  {guild.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+
+      {scope === "guild" && !activeGuildId && (
+        <div className="parchment-sunken mb-3 rounded-md px-3 py-2 text-sm text-[var(--muted-text)]">
+          Select a guild to view guild-only quests.
+        </div>
+      )}
+
+      {scope !== "personal" && activeGuildId && (
+        <div className="mb-3 flex items-center gap-2 text-sm text-[var(--muted-text)]">
+          {guildOptions
+            .filter((guild) => guild.id === activeGuildId)
+            .map((guild) => (
+              <span key={guild.id} className="inline-flex items-center gap-2">
+                <GuildCrest preset={guild.crestPreset} size="sm" />
+                {guild.name}
+              </span>
+            ))}
+        </div>
+      )}
+
       {view === "log" ? (
-        <QuestLogView quests={quests} onMoveQuest={handleMoveQuest} />
+        <QuestLogView quests={visibleByScope} onMoveQuest={handleMoveQuest} />
       ) : (
         <KanbanBoard
-          quests={showClosed ? quests : quests.filter((q) => !KANBAN_CLOSED_COLUMNS.includes(q.status))}
+          quests={
+            showClosed
+              ? visibleByScope
+              : visibleByScope.filter((q) => !KANBAN_CLOSED_COLUMNS.includes(q.status))
+          }
           onMoveQuest={handleMoveQuest}
           onUpdateQuestMeta={handleUpdateQuestMeta}
           showClosed={showClosed}

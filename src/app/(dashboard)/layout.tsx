@@ -21,6 +21,7 @@ export default async function DashboardLayout({
             </Link>
             <NavLink href="/quests">Quests</NavLink>
             <NavLink href="/character">Character</NavLink>
+            <NavLink href="/guilds">Guilds</NavLink>
           </div>
 
           <div className="flex items-center gap-3">

@@ -8,8 +8,15 @@ import {
   PRIORITY_LABELS,
 } from "@/shared/lib/constants";
 import { useRef } from "react";
+import type { GuildOption } from "@/features/guilds/types";
 
-export function QuestForm({ onClose }: { onClose?: () => void }) {
+export function QuestForm({
+  onClose,
+  guildOptions = [],
+}: {
+  onClose?: () => void;
+  guildOptions?: GuildOption[];
+}) {
   const formRef = useRef<HTMLFormElement>(null);
 
   async function handleSubmit(formData: FormData) {
@@ -37,6 +44,18 @@ export function QuestForm({ onClose }: { onClose?: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <SelectField name="questType" label="Type" options={QUEST_TYPES} labels={QUEST_TYPE_LABELS} />
         <SelectField name="priority" label="Priority" options={QUEST_PRIORITIES} labels={PRIORITY_LABELS} />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="rpg-subhead">Board</label>
+        <select name="guildId" className="rpg-select">
+          <option value="">Personal Board</option>
+          {guildOptions.map((guild) => (
+            <option key={guild.id} value={guild.id}>
+              Guild: {guild.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <input

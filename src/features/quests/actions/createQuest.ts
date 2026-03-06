@@ -1,12 +1,13 @@
 "use server";
 
 import { db } from "@/shared/db/client";
-import { quests, questLogs } from "@/shared/db/schema";
+import { quests, questLogs, guildMembers } from "@/shared/db/schema";
 import { auth } from "@/features/auth/lib/auth";
 import { questCreateSchema } from "@/features/quests/types/schemas";
 import { calculateXpReward } from "@/features/character/lib/xpEngine";
 import { revalidatePath } from "next/cache";
 import type { QuestType, QuestPriority } from "@/shared/lib/constants";
+import { and, eq } from "drizzle-orm";
 
 export async function createQuest(formData: FormData) {
   const session = await auth();
@@ -18,6 +19,7 @@ export async function createQuest(formData: FormData) {
     questType: formData.get("questType"),
     priority: formData.get("priority"),
     dueDate: formData.get("dueDate") || undefined,
+    guildId: formData.get("guildId") || undefined,
   };
 
   const parsed = questCreateSchema.parse(raw);
@@ -26,10 +28,28 @@ export async function createQuest(formData: FormData) {
     (parsed.priority ?? "moderate") as QuestPriority
   );
 
+  if (parsed.guildId) {
+    const [membership] = await db
+      .select({ id: guildMembers.id })
+      .from(guildMembers)
+      .where(
+        and(
+          eq(guildMembers.guildId, parsed.guildId),
+          eq(guildMembers.userId, session.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!membership) {
+      throw new Error("You are not a member of this guild");
+    }
+  }
+
   const [quest] = await db
     .insert(quests)
     .values({
       userId: session.user.id,
+      guildId: parsed.guildId ?? null,
       title: parsed.title,
       description: parsed.description ?? null,
       questType: parsed.questType,

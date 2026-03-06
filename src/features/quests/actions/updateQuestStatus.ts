@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/shared/db/client";
-import { quests, questLogs, profiles } from "@/shared/db/schema";
+import { quests, questLogs, profiles, guildMembers } from "@/shared/db/schema";
 import { auth } from "@/features/auth/lib/auth";
 import { questUpdateStatusSchema } from "@/features/quests/types/schemas";
 import { checkLevelUp, distributeStatPoints } from "@/features/character/lib/xpEngine";
@@ -27,9 +27,11 @@ export async function updateQuestStatus(formData: FormData) {
     .where(eq(quests.id, parsed.questId))
     .limit(1);
 
-  if (!quest || quest.userId !== session.user.id) {
+  if (!quest) {
     throw new Error("Quest not found");
   }
+
+  await assertCanEditQuest(session.user.id, quest.userId, quest.guildId);
 
   const [lastCompletion] = await db
     .select({ id: questLogs.id })
@@ -116,4 +118,27 @@ async function logStatusChange(
 
 function isClosedStatus(status: QuestStatus): boolean {
   return status === "completed" || status === "failed";
+}
+
+async function assertCanEditQuest(
+  actingUserId: string,
+  ownerUserId: string,
+  guildId: string | null
+) {
+  if (!guildId) {
+    if (actingUserId !== ownerUserId) {
+      throw new Error("You do not have permission to edit this quest");
+    }
+    return;
+  }
+
+  const [membership] = await db
+    .select({ id: guildMembers.id })
+    .from(guildMembers)
+    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, actingUserId)))
+    .limit(1);
+
+  if (!membership) {
+    throw new Error("You are not a member of this guild");
+  }
 }

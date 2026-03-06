@@ -13,6 +13,7 @@ import {
   type QuestType,
 } from "@/shared/lib/constants";
 import { formatDate } from "@/shared/lib/utils";
+import { GuildCrest } from "@/features/guilds/components/GuildCrest";
 
 interface QuestCardProps {
   quest: Quest;
@@ -46,7 +47,12 @@ export function QuestCard({ quest, onUpdateQuestMeta }: QuestCardProps) {
   return (
     <div
       className="parchment-card rounded-lg p-3"
-      style={{ borderLeft: `4px solid ${edgeColors[quest.questType]}` }}
+      style={{
+        borderLeft: `4px solid ${edgeColors[quest.questType]}`,
+        boxShadow: quest.guildId
+          ? "inset 0 0 0 1px rgba(88, 126, 255, 0.35), 0 8px 18px color-mix(in srgb, #000 12%, transparent)"
+          : "inset 0 0 0 1px rgba(201, 173, 116, 0.2), 0 8px 18px color-mix(in srgb, #000 12%, transparent)",
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <h3 className="rpg-heading flex items-center gap-1 text-sm font-semibold">
@@ -61,6 +67,7 @@ export function QuestCard({ quest, onUpdateQuestMeta }: QuestCardProps) {
       <div className="mt-2 flex flex-wrap gap-1.5">
         <QuestTypeBadge questType={quest.questType} />
         <PriorityBadge priority={quest.priority} />
+        <ScopeBadge quest={quest} />
       </div>
 
       {onUpdateQuestMeta && (
@@ -109,6 +116,23 @@ export function QuestCard({ quest, onUpdateQuestMeta }: QuestCardProps) {
         </p>
       )}
     </div>
+  );
+}
+
+function ScopeBadge({ quest }: { quest: Quest }) {
+  if (!quest.guildId) {
+    return (
+      <span className="inline-block rounded-full border border-amber-700/30 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+        Personal
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-blue-700/30 px-2 py-0.5 text-[10px] font-semibold text-blue-900">
+      <GuildCrest preset={quest.guildCrestPreset ?? "lion"} size="xs" />
+      {quest.guildName ?? "Guild"}
+    </span>
   );
 }
 

@@ -11,6 +11,7 @@ export const questCreateSchema = z.object({
   questType: z.enum(QUEST_TYPES),
   priority: z.enum(QUEST_PRIORITIES).default("moderate"),
   dueDate: z.coerce.date().optional(),
+  guildId: z.string().uuid().optional(),
 });
 
 export const questUpdateStatusSchema = z.object({

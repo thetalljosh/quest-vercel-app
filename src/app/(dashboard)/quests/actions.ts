@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/shared/db/client";
-import { quests, questLogs, profiles } from "@/shared/db/schema";
+import { quests, questLogs, profiles, guildMembers } from "@/shared/db/schema";
 import { auth } from "@/features/auth/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -27,10 +27,11 @@ export async function moveQuestAction(
   const [quest] = await db
     .select()
     .from(quests)
-    .where(and(eq(quests.id, questId), eq(quests.userId, session.user.id)))
+    .where(eq(quests.id, questId))
     .limit(1);
 
   if (!quest) throw new Error("Quest not found");
+  await assertCanEditQuest(session.user.id, quest.userId, quest.guildId);
 
   const wasClosed = isClosedStatus(quest.status);
   const reopening = wasClosed && !isClosedStatus(newStatus);
@@ -52,9 +53,7 @@ export async function moveQuestAction(
       completedAt: newStatus === "completed" ? new Date() : null,
       updatedAt: new Date(),
     })
-    .where(
-      and(eq(quests.id, questId), eq(quests.userId, session.user.id))
-    );
+    .where(eq(quests.id, questId));
 
   if (shouldAwardXp) {
     await awardXp(session.user.id, {
@@ -96,10 +95,11 @@ export async function updateQuestCardMetaAction(
   const [quest] = await db
     .select()
     .from(quests)
-    .where(and(eq(quests.id, questId), eq(quests.userId, session.user.id)))
+    .where(eq(quests.id, questId))
     .limit(1);
 
   if (!quest) throw new Error("Quest not found");
+  await assertCanEditQuest(session.user.id, quest.userId, quest.guildId);
 
   const xpReward = calculateXpReward(questType, priority);
 
@@ -111,7 +111,7 @@ export async function updateQuestCardMetaAction(
       xpReward,
       updatedAt: new Date(),
     })
-    .where(and(eq(quests.id, questId), eq(quests.userId, session.user.id)));
+    .where(eq(quests.id, questId));
 
   await db.insert(questLogs).values({
     questId,
@@ -179,4 +179,27 @@ async function logStatusChange(
 
 function isClosedStatus(status: QuestStatus): boolean {
   return status === "completed" || status === "failed";
+}
+
+async function assertCanEditQuest(
+  actingUserId: string,
+  ownerUserId: string,
+  guildId: string | null
+) {
+  if (!guildId) {
+    if (actingUserId !== ownerUserId) {
+      throw new Error("You do not have permission to edit this quest");
+    }
+    return;
+  }
+
+  const [membership] = await db
+    .select({ id: guildMembers.id })
+    .from(guildMembers)
+    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, actingUserId)))
+    .limit(1);
+
+  if (!membership) {
+    throw new Error("You are not a member of this guild");
+  }
 }
