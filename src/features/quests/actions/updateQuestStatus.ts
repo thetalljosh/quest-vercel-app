@@ -5,9 +5,9 @@ import { quests, questLogs, profiles } from "@/shared/db/schema";
 import { auth } from "@/features/auth/lib/auth";
 import { questUpdateStatusSchema } from "@/features/quests/types/schemas";
 import { checkLevelUp, distributeStatPoints } from "@/features/character/lib/xpEngine";
-import { eq } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import type { QuestType } from "@/shared/lib/constants";
+import type { QuestStatus, QuestType } from "@/shared/lib/constants";
 
 export async function updateQuestStatus(formData: FormData) {
   const session = await auth();
@@ -31,6 +31,15 @@ export async function updateQuestStatus(formData: FormData) {
     throw new Error("Quest not found");
   }
 
+  const [lastCompletion] = await db
+    .select({ id: questLogs.id })
+    .from(questLogs)
+    .where(and(eq(questLogs.questId, quest.id), eq(questLogs.action, "completed")))
+    .orderBy(desc(questLogs.createdAt))
+    .limit(1);
+
+  const shouldAwardXp = parsed.status === "completed" && !lastCompletion;
+
   await db
     .update(quests)
     .set({
@@ -41,12 +50,13 @@ export async function updateQuestStatus(formData: FormData) {
     })
     .where(eq(quests.id, parsed.questId));
 
-  if (parsed.status === "completed") {
+  if (shouldAwardXp) {
     await awardXp(session.user.id, quest);
   }
 
-  await logStatusChange(quest.id, session.user.id, parsed.status);
+  await logStatusChange(quest.id, session.user.id, quest.status as QuestStatus, parsed.status, shouldAwardXp ? quest.xpReward : null);
   revalidatePath("/quests");
+  revalidatePath("/character");
 }
 
 async function awardXp(
@@ -82,10 +92,15 @@ async function awardXp(
 async function logStatusChange(
   questId: string,
   userId: string,
-  status: string
+  oldStatus: QuestStatus,
+  status: QuestStatus,
+  xpAwarded: number | null
 ) {
-  const action =
-    status === "completed"
+  const reopening = isClosedStatus(oldStatus) && !isClosedStatus(status);
+
+  const action = reopening
+    ? "reopened"
+    : status === "completed"
       ? "completed"
       : status === "failed"
         ? "failed"
@@ -95,5 +110,10 @@ async function logStatusChange(
     questId,
     userId,
     action,
+    xpAwarded,
   });
+}
+
+function isClosedStatus(status: QuestStatus): boolean {
+  return status === "completed" || status === "failed";
 }

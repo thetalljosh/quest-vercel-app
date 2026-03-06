@@ -2,7 +2,7 @@ import { auth } from "@/features/auth/lib/auth";
 import { getQuestsByUser } from "@/features/quests/lib/queries";
 import { QuestLogWrapper } from "@/features/quests/components/QuestLogWrapper";
 import { QuestForm } from "@/features/quests/components/QuestForm";
-import { moveQuestAction } from "./actions";
+import { moveQuestAction, updateQuestCardMetaAction } from "./actions";
 
 export default async function QuestsPage() {
   const session = await auth();
@@ -19,6 +19,7 @@ export default async function QuestsPage() {
       <QuestLogWrapper
         initialQuests={quests}
         moveAction={moveQuestAction}
+        updateMetaAction={updateQuestCardMetaAction}
       />
 
       <div className="parchment-card mx-auto w-full max-w-xl rounded-xl p-5">

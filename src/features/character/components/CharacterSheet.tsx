@@ -6,9 +6,10 @@ import { StatBar } from "./StatBar";
 
 interface CharacterSheetProps {
   profile: Profile;
+  completionStreak: number;
 }
 
-export function CharacterSheet({ profile }: CharacterSheetProps) {
+export function CharacterSheet({ profile, completionStreak }: CharacterSheetProps) {
   const nextLevelXp = xpThresholdForLevel(profile.level + 1);
 
   return (
@@ -22,6 +23,13 @@ export function CharacterSheet({ profile }: CharacterSheetProps) {
 
       <div className="mt-4">
         <XpProgressBar currentXp={profile.currentXp} nextLevelXp={nextLevelXp} />
+      </div>
+
+      <div className="mt-4 parchment-sunken rounded-lg px-3 py-2">
+        <p className="rpg-subhead">Completion Streak</p>
+        <p className="rpg-heading mt-1 text-lg">
+          🔥 {completionStreak}
+        </p>
       </div>
 
       <div className="mt-6 flex flex-col gap-3">

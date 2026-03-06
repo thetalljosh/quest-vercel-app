@@ -35,6 +35,7 @@ export const QUEST_LOG_ACTIONS = [
   "completed",
   "failed",
   "moved",
+  "reopened",
 ] as const;
 
 export type QuestLogAction = (typeof QUEST_LOG_ACTIONS)[number];

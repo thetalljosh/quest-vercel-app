@@ -3,8 +3,21 @@
 import { useDraggable } from "@dnd-kit/core";
 import { QuestCard } from "@/features/quests/components/QuestCard";
 import type { Quest } from "@/features/quests/types";
+import type { QuestPriority, QuestType } from "@/shared/lib/constants";
 
-export function DraggableQuestCard({ quest }: { quest: Quest }) {
+interface DraggableQuestCardProps {
+  quest: Quest;
+  onUpdateQuestMeta?: (
+    questId: string,
+    questType: QuestType,
+    priority: QuestPriority
+  ) => void;
+}
+
+export function DraggableQuestCard({
+  quest,
+  onUpdateQuestMeta,
+}: DraggableQuestCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: quest.id });
 
@@ -24,7 +37,7 @@ export function DraggableQuestCard({ quest }: { quest: Quest }) {
       {...listeners}
       {...attributes}
     >
-      <QuestCard quest={quest} />
+      <QuestCard quest={quest} onUpdateQuestMeta={onUpdateQuestMeta} />
     </div>
   );
 }

@@ -3,10 +3,16 @@
 import { db } from "@/shared/db/client";
 import { quests, questLogs, profiles } from "@/shared/db/schema";
 import { auth } from "@/features/auth/lib/auth";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { QuestStatus, QuestType } from "@/shared/lib/constants";
 import {
+  QUEST_PRIORITIES,
+  QUEST_TYPES,
+  type QuestPriority,
+} from "@/shared/lib/constants";
+import {
+  calculateXpReward,
   checkLevelUp,
   distributeStatPoints,
 } from "@/features/character/lib/xpEngine";
@@ -14,7 +20,7 @@ import {
 export async function moveQuestAction(
   questId: string,
   newStatus: QuestStatus
-) {
+): Promise<number> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
@@ -26,8 +32,18 @@ export async function moveQuestAction(
 
   if (!quest) throw new Error("Quest not found");
 
-  const wasCompleted = quest.status === "completed";
-  const becomingCompleted = !wasCompleted && newStatus === "completed";
+  const wasClosed = isClosedStatus(quest.status);
+  const reopening = wasClosed && !isClosedStatus(newStatus);
+  const becomingCompleted = newStatus === "completed";
+
+  const [lastCompletion] = await db
+    .select({ id: questLogs.id })
+    .from(questLogs)
+    .where(and(eq(questLogs.questId, quest.id), eq(questLogs.action, "completed")))
+    .orderBy(desc(questLogs.createdAt))
+    .limit(1);
+
+  const shouldAwardXp = becomingCompleted && !lastCompletion;
 
   await db
     .update(quests)
@@ -40,17 +56,70 @@ export async function moveQuestAction(
       and(eq(quests.id, questId), eq(quests.userId, session.user.id))
     );
 
-  if (becomingCompleted) {
+  if (shouldAwardXp) {
     await awardXp(session.user.id, {
       xpReward: quest.xpReward,
       questType: quest.questType,
     });
   }
 
-  await logStatusChange(quest.id, session.user.id, newStatus, becomingCompleted ? quest.xpReward : null);
+  await logStatusChange(
+    quest.id,
+    session.user.id,
+    quest.status,
+    newStatus,
+    shouldAwardXp ? quest.xpReward : null
+  );
 
   revalidatePath("/quests");
   revalidatePath("/character");
+
+  return shouldAwardXp ? quest.xpReward : 0;
+}
+
+export async function updateQuestCardMetaAction(
+  questId: string,
+  questType: QuestType,
+  priority: QuestPriority
+) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  if (!QUEST_TYPES.includes(questType)) {
+    throw new Error("Invalid quest type");
+  }
+
+  if (!QUEST_PRIORITIES.includes(priority)) {
+    throw new Error("Invalid priority");
+  }
+
+  const [quest] = await db
+    .select()
+    .from(quests)
+    .where(and(eq(quests.id, questId), eq(quests.userId, session.user.id)))
+    .limit(1);
+
+  if (!quest) throw new Error("Quest not found");
+
+  const xpReward = calculateXpReward(questType, priority);
+
+  await db
+    .update(quests)
+    .set({
+      questType,
+      priority,
+      xpReward,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(quests.id, questId), eq(quests.userId, session.user.id)));
+
+  await db.insert(questLogs).values({
+    questId,
+    userId: session.user.id,
+    action: "moved",
+  });
+
+  revalidatePath("/quests");
 }
 
 async function awardXp(
@@ -86,11 +155,15 @@ async function awardXp(
 async function logStatusChange(
   questId: string,
   userId: string,
+  oldStatus: QuestStatus,
   status: QuestStatus,
   xpAwarded: number | null
 ) {
-  const action =
-    status === "completed"
+  const reopening = isClosedStatus(oldStatus) && !isClosedStatus(status);
+
+  const action = reopening
+    ? "reopened"
+    : status === "completed"
       ? "completed"
       : status === "failed"
         ? "failed"
@@ -102,4 +175,8 @@ async function logStatusChange(
     action,
     xpAwarded,
   });
+}
+
+function isClosedStatus(status: QuestStatus): boolean {
+  return status === "completed" || status === "failed";
 }
