@@ -23,6 +23,7 @@ export function QuestLogWrapper({
   const [isPending, startTransition] = useTransition();
   const [view, setView] = useState<QuestView>("log");
   const [showClosed, setShowClosed] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -45,11 +46,29 @@ export function QuestLogWrapper({
   );
 
   function handleMoveQuest(questId: string, newStatus: QuestStatus) {
+    const quest = quests.find((item) => item.id === questId);
+    const shouldShowCompletionToast =
+      quest && quest.status !== "completed" && newStatus === "completed";
+
     addOptimistic({ questId, newStatus });
     startTransition(async () => {
       await moveAction(questId, newStatus);
+
+      if (shouldShowCompletionToast && quest) {
+        setToastMessage(`+${quest.xpReward} XP gained`);
+      }
     });
   }
+
+  useEffect(() => {
+    if (!toastMessage) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setToastMessage(null);
+    }, 2400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [toastMessage]);
 
   return (
     <section className={isPending ? "opacity-80" : ""}>
@@ -110,6 +129,14 @@ export function QuestLogWrapper({
           onMoveQuest={handleMoveQuest}
           showClosed={showClosed}
         />
+      )}
+
+      {toastMessage && (
+        <div className="pointer-events-none fixed top-5 right-5 z-50">
+          <div className="parchment-card rounded-lg px-4 py-2 text-sm font-semibold text-[var(--accent)] shadow-lg">
+            {toastMessage}
+          </div>
+        </div>
       )}
     </section>
   );
