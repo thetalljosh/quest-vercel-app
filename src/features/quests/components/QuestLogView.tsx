@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Quest } from "@/features/quests/types";
 import { formatDate } from "@/shared/lib/utils";
 import {
+  KANBAN_CLOSED_COLUMNS,
   QUEST_STATUS_LABELS,
   QUEST_TYPE_LABELS,
   QUEST_TYPE_ICONS,
@@ -24,7 +25,10 @@ const STATUS_ACTIONS: QuestStatus[] = [
   "failed",
 ];
 
+type QuestLogTab = "current" | "archive";
+
 export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
+  const [activeTab, setActiveTab] = useState<QuestLogTab>("current");
   const [selectedId, setSelectedId] = useState<string | null>(quests[0]?.id ?? null);
 
   const sortedQuests = useMemo(
@@ -32,23 +36,57 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
     [quests]
   );
 
+  const filteredQuests = useMemo(() => {
+    if (activeTab === "archive") {
+      return sortedQuests.filter((quest) => KANBAN_CLOSED_COLUMNS.includes(quest.status));
+    }
+    return sortedQuests.filter((quest) => !KANBAN_CLOSED_COLUMNS.includes(quest.status));
+  }, [activeTab, sortedQuests]);
+
+  useEffect(() => {
+    if (!filteredQuests.length) {
+      setSelectedId(null);
+      return;
+    }
+
+    const isSelectedVisible = selectedId
+      ? filteredQuests.some((quest) => quest.id === selectedId)
+      : false;
+
+    if (!isSelectedVisible) {
+      setSelectedId(filteredQuests[0].id);
+    }
+  }, [filteredQuests, selectedId]);
+
   const selectedQuest = useMemo(() => {
-    if (!selectedId) return sortedQuests[0] ?? null;
-    return sortedQuests.find((quest) => quest.id === selectedId) ?? sortedQuests[0] ?? null;
-  }, [selectedId, sortedQuests]);
+    if (!selectedId) return filteredQuests[0] ?? null;
+    return filteredQuests.find((quest) => quest.id === selectedId) ?? filteredQuests[0] ?? null;
+  }, [selectedId, filteredQuests]);
 
   return (
     <div className="book-shell parchment-card grid min-h-[480px] grid-cols-1 gap-0 overflow-hidden rounded-xl lg:grid-cols-[320px_1fr]">
       <section className="book-page-left parchment-sunken border-r border-[var(--border)] p-4">
         <div className="mb-3 flex items-end gap-2">
-          <span className="quest-tab quest-tab-active">Current</span>
-          <span className="quest-tab opacity-75">Archive</span>
+          <button
+            type="button"
+            onClick={() => setActiveTab("current")}
+            className={`quest-tab ${activeTab === "current" ? "quest-tab-active" : "opacity-75"}`}
+          >
+            Current
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("archive")}
+            className={`quest-tab ${activeTab === "archive" ? "quest-tab-active" : "opacity-75"}`}
+          >
+            Archive
+          </button>
         </div>
 
         <h2 className="rpg-heading mb-2 text-lg">Quest Log</h2>
         <div className="ornamental-divider mb-3" />
         <div className="max-h-[520px] space-y-1 overflow-y-auto pr-1">
-          {sortedQuests.map((quest) => {
+          {filteredQuests.map((quest) => {
             const isSelected = selectedQuest?.id === quest.id;
             return (
               <button
@@ -72,9 +110,11 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
               </button>
             );
           })}
-          {sortedQuests.length === 0 && (
+          {filteredQuests.length === 0 && (
             <p className="px-2 py-4 text-sm text-[var(--muted-text)]">
-              No quests yet. Accept a new quest below.
+              {activeTab === "archive"
+                ? "No archived quests yet."
+                : "No current quests yet. Accept a new quest below."}
             </p>
           )}
         </div>
