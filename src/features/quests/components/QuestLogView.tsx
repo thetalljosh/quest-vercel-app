@@ -137,6 +137,14 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
               {selectedQuest.description || "No quest details written yet."}
             </p>
 
+            {selectedQuest.guildId &&
+              selectedQuest.status === "completed" &&
+              selectedQuest.completedByName && (
+                <p className="mt-3 text-sm text-[var(--muted-text)]">
+                  Completed by: {selectedQuest.completedByName}
+                </p>
+              )}
+
             <div className="mt-6 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               <InfoField label="XP Reward" value={`+${selectedQuest.xpReward}`} />
               <InfoField

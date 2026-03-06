@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cinzel, EB_Garamond, Geist, Geist_Mono, Lexend } from "next/font/google";
+import { Atkinson_Hyperlegible, Cinzel, EB_Garamond, Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { ThemePanel } from "@/shared/components/ThemePanel";
 import "./globals.css";
@@ -24,9 +24,10 @@ const ebGaramond = EB_Garamond({
   subsets: ["latin"],
 });
 
-const lexend = Lexend({
+const lexend = Atkinson_Hyperlegible({
   variable: "--font-lexend",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {

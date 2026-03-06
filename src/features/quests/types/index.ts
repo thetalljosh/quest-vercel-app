@@ -11,6 +11,7 @@ export interface Quest {
   guildId?: string | null;
   guildName?: string | null;
   guildCrestPreset?: GuildCrestPreset | null;
+  completedByName?: string | null;
   title: string;
   description: string | null;
   questType: QuestType;

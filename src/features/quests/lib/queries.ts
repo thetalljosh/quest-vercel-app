@@ -1,6 +1,6 @@
 import { db } from "@/shared/db/client";
-import { quests, guildMembers, guilds } from "@/shared/db/schema";
-import { eq, asc, and, inArray, isNull, or } from "drizzle-orm";
+import { quests, guildMembers, guilds, questLogs, users } from "@/shared/db/schema";
+import { eq, asc, and, inArray, isNull, or, sql } from "drizzle-orm";
 import type { Quest } from "@/features/quests/types";
 import type { GuildCrestPreset } from "@/shared/lib/constants";
 
@@ -30,6 +30,15 @@ export async function getQuestsByUser(userId: string): Promise<Quest[]> {
       updatedAt: quests.updatedAt,
       guildName: guilds.name,
       guildCrestPreset: guilds.crestPreset,
+      completedByName: sql<string | null>`(
+        select coalesce(${users.name}, ${users.email})
+        from ${questLogs}
+        inner join ${users} on ${users.id} = ${questLogs.userId}
+        where ${questLogs.questId} = ${quests.id}
+          and ${questLogs.action} = 'completed'
+        order by ${questLogs.createdAt} desc
+        limit 1
+      )`,
     })
     .from(quests)
     .leftJoin(guilds, eq(quests.guildId, guilds.id))

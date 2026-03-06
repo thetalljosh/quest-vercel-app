@@ -115,6 +115,12 @@ export function QuestCard({ quest, onUpdateQuestMeta }: QuestCardProps) {
           Due: {formatDate(quest.dueDate)}
         </p>
       )}
+
+      {quest.guildId && quest.status === "completed" && quest.completedByName && (
+        <p className="mt-1 text-xs text-[var(--muted-text)]">
+          Completed by: {quest.completedByName}
+        </p>
+      )}
     </div>
   );
 }
