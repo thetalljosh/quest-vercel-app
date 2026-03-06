@@ -13,6 +13,14 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({ status, title, quests }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
+  const statusIcons: Record<QuestStatus, string> = {
+    backlog: "🗂️",
+    active: "⚔️",
+    in_progress: "⏳",
+    review: "🕯️",
+    completed: "🏆",
+    failed: "☠️",
+  };
 
   return (
     <div
@@ -25,6 +33,7 @@ export function KanbanColumn({ status, title, quests }: KanbanColumnProps) {
                   }`}
     >
       <h2 className="rpg-subhead mb-3 text-xs">
+        <span className="mr-1">{statusIcons[status]}</span>
         {title}
         <span className="ml-2 text-[var(--muted-text)]">({quests.length})</span>
       </h2>

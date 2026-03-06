@@ -53,17 +53,17 @@ export function QuestLogWrapper({
 
   return (
     <section className={isPending ? "opacity-80" : ""}>
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-2 text-xs uppercase tracking-wider">
+      <div className="mb-3 flex flex-wrap items-end justify-end gap-2">
         <button
           type="button"
           onClick={() => {
             setView("log");
             localStorage.setItem(STORAGE_KEY, "log");
           }}
-          className={`rounded-md border px-3 py-1.5 font-semibold ${
+          className={`quest-tab ${
             view === "log"
-              ? "border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--accent-text)]"
-              : "border-[var(--border)] text-[var(--muted-text)]"
+              ? "quest-tab-active"
+              : ""
           }`}
         >
           📜 Quest Log
@@ -74,10 +74,10 @@ export function QuestLogWrapper({
             setView("kanban");
             localStorage.setItem(STORAGE_KEY, "kanban");
           }}
-          className={`rounded-md border px-3 py-1.5 font-semibold ${
+          className={`quest-tab ${
             view === "kanban"
-              ? "border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--accent-text)]"
-              : "border-[var(--border)] text-[var(--muted-text)]"
+              ? "quest-tab-active"
+              : ""
           }`}
         >
           📋 Kanban
@@ -91,10 +91,10 @@ export function QuestLogWrapper({
               setShowClosed(next);
               localStorage.setItem(CLOSED_KEY, String(next));
             }}
-            className={`rounded-md border px-3 py-1.5 font-semibold ${
+            className={`quest-tab ${
               showClosed
-                ? "border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--accent-text)]"
-                : "border-[var(--border)] text-[var(--muted-text)]"
+                ? "quest-tab-active"
+                : ""
             }`}
           >
             {showClosed ? "📕 Hide Closed" : "📖 Show Closed"}

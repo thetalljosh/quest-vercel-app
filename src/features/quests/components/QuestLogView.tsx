@@ -38,8 +38,13 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
   }, [selectedId, sortedQuests]);
 
   return (
-    <div className="parchment-card grid min-h-[480px] grid-cols-1 gap-0 overflow-hidden rounded-xl lg:grid-cols-[320px_1fr]">
-      <section className="parchment-sunken border-r border-[var(--border)] p-4">
+    <div className="book-shell parchment-card grid min-h-[480px] grid-cols-1 gap-0 overflow-hidden rounded-xl lg:grid-cols-[320px_1fr]">
+      <section className="book-page-left parchment-sunken border-r border-[var(--border)] p-4">
+        <div className="mb-3 flex items-end gap-2">
+          <span className="quest-tab quest-tab-active">Current</span>
+          <span className="quest-tab opacity-75">Archive</span>
+        </div>
+
         <h2 className="rpg-heading mb-2 text-lg">Quest Log</h2>
         <div className="ornamental-divider mb-3" />
         <div className="max-h-[520px] space-y-1 overflow-y-auto pr-1">
@@ -61,7 +66,7 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
                   {quest.title}
                 </p>
                 <div className="mt-1 flex items-center justify-between text-xs text-[var(--muted-text)]">
-                  <span>{QUEST_TYPE_LABELS[quest.questType]}</span>
+                  <span className="truncate pr-2">{QUEST_TYPE_LABELS[quest.questType]}</span>
                   <span>+{quest.xpReward} XP</span>
                 </div>
               </button>
@@ -75,7 +80,7 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
         </div>
       </section>
 
-      <section className="p-5 lg:p-6">
+      <section className="book-page-right p-5 lg:p-6">
         {!selectedQuest ? (
           <p className="text-sm text-[var(--muted-text)]">Select a quest to view details.</p>
         ) : (
