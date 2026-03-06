@@ -10,18 +10,27 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "./KanbanColumn";
 import type { Quest } from "@/features/quests/types";
-import { KANBAN_COLUMNS, QUEST_STATUS_LABELS } from "@/shared/lib/constants";
+import {
+  KANBAN_COLUMNS,
+  KANBAN_CLOSED_COLUMNS,
+  QUEST_STATUS_LABELS,
+} from "@/shared/lib/constants";
 import type { QuestStatus } from "@/shared/lib/constants";
 
 interface KanbanBoardProps {
   quests: Quest[];
   onMoveQuest: (questId: string, newStatus: QuestStatus) => void;
+  showClosed?: boolean;
 }
 
-export function KanbanBoard({ quests, onMoveQuest }: KanbanBoardProps) {
+export function KanbanBoard({ quests, onMoveQuest, showClosed = false }: KanbanBoardProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
+
+  const columns = showClosed
+    ? [...KANBAN_COLUMNS, ...KANBAN_CLOSED_COLUMNS]
+    : KANBAN_COLUMNS;
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -42,8 +51,12 @@ export function KanbanBoard({ quests, onMoveQuest }: KanbanBoardProps) {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {KANBAN_COLUMNS.map((status) => (
+      <div
+        className={showClosed
+          ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6"
+          : "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"}
+      >
+        {columns.map((status) => (
           <KanbanColumn
             key={status}
             status={status}

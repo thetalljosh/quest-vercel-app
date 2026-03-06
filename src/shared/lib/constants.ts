@@ -83,6 +83,11 @@ export const KANBAN_COLUMNS: QuestStatus[] = [
   "review",
 ];
 
+export const KANBAN_CLOSED_COLUMNS: QuestStatus[] = [
+  "completed",
+  "failed",
+];
+
 /** Color classes for quest type badges. */
 export const QUEST_TYPE_COLORS: Record<QuestType, string> = {
   main: "bg-amber-500 text-white",
@@ -101,6 +106,15 @@ export const QUEST_TYPE_LABELS: Record<QuestType, string> = {
   world: "World Quest",
   side: "Side Quest",
   commission: "Commission",
+};
+
+export const QUEST_TYPE_ICONS: Record<QuestType, string> = {
+  main: "◈",
+  character: "✦",
+  event: "✶",
+  world: "❖",
+  side: "◇",
+  commission: "⌘",
 };
 
 export const QUEST_STATUS_LABELS: Record<QuestStatus, string> = {

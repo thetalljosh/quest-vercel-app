@@ -4,7 +4,7 @@ import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { KanbanBoard } from "@/features/kanban/components/KanbanBoard";
 import { QuestLogView } from "@/features/quests/components/QuestLogView";
 import type { Quest } from "@/features/quests/types";
-import type { QuestStatus } from "@/shared/lib/constants";
+import { KANBAN_CLOSED_COLUMNS, type QuestStatus } from "@/shared/lib/constants";
 
 interface QuestLogWrapperProps {
   initialQuests: Quest[];
@@ -14,6 +14,7 @@ interface QuestLogWrapperProps {
 type OptimisticUpdate = { questId: string; newStatus: QuestStatus };
 type QuestView = "log" | "kanban";
 const STORAGE_KEY = "quest-view";
+const CLOSED_KEY = "show-closed-kanban";
 
 export function QuestLogWrapper({
   initialQuests,
@@ -21,11 +22,17 @@ export function QuestLogWrapper({
 }: QuestLogWrapperProps) {
   const [isPending, startTransition] = useTransition();
   const [view, setView] = useState<QuestView>("log");
+  const [showClosed, setShowClosed] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "log" || stored === "kanban") {
       setView(stored);
+    }
+
+    const closedStored = localStorage.getItem(CLOSED_KEY);
+    if (closedStored === "true") {
+      setShowClosed(true);
     }
   }, []);
 
@@ -46,7 +53,7 @@ export function QuestLogWrapper({
 
   return (
     <section className={isPending ? "opacity-80" : ""}>
-      <div className="mb-3 flex items-center justify-end gap-2 text-xs uppercase tracking-wider">
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2 text-xs uppercase tracking-wider">
         <button
           type="button"
           onClick={() => {
@@ -75,12 +82,34 @@ export function QuestLogWrapper({
         >
           📋 Kanban
         </button>
+
+        {view === "kanban" && (
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showClosed;
+              setShowClosed(next);
+              localStorage.setItem(CLOSED_KEY, String(next));
+            }}
+            className={`rounded-md border px-3 py-1.5 font-semibold ${
+              showClosed
+                ? "border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--accent-text)]"
+                : "border-[var(--border)] text-[var(--muted-text)]"
+            }`}
+          >
+            {showClosed ? "📕 Hide Closed" : "📖 Show Closed"}
+          </button>
+        )}
       </div>
 
       {view === "log" ? (
         <QuestLogView quests={quests} onMoveQuest={handleMoveQuest} />
       ) : (
-        <KanbanBoard quests={quests} onMoveQuest={handleMoveQuest} />
+        <KanbanBoard
+          quests={showClosed ? quests : quests.filter((q) => !KANBAN_CLOSED_COLUMNS.includes(q.status))}
+          onMoveQuest={handleMoveQuest}
+          showClosed={showClosed}
+        />
       )}
     </section>
   );

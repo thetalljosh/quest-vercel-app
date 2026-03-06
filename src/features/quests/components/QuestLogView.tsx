@@ -6,6 +6,7 @@ import { formatDate } from "@/shared/lib/utils";
 import {
   QUEST_STATUS_LABELS,
   QUEST_TYPE_LABELS,
+  QUEST_TYPE_ICONS,
   PRIORITY_LABELS,
   type QuestStatus,
 } from "@/shared/lib/constants";
@@ -55,7 +56,10 @@ export function QuestLogView({ quests, onMoveQuest }: QuestLogViewProps) {
                     : "border-[var(--border)] bg-[var(--surface-elevated)]"
                 }`}
               >
-                <p className="rpg-heading truncate text-sm">{quest.title}</p>
+                <p className="rpg-heading flex items-center gap-1 truncate text-sm">
+                  <span className="text-[var(--accent)]">{QUEST_TYPE_ICONS[quest.questType]}</span>
+                  {quest.title}
+                </p>
                 <div className="mt-1 flex items-center justify-between text-xs text-[var(--muted-text)]">
                   <span>{QUEST_TYPE_LABELS[quest.questType]}</span>
                   <span>+{quest.xpReward} XP</span>
