@@ -10,6 +10,7 @@ import {
 } from "@/shared/db/schema";
 import {
   GUILD_CREST_PRESETS,
+  PHRASE_WORDS,
   type GuildCrestPreset,
 } from "@/shared/lib/constants";
 import { and, desc, eq } from "drizzle-orm";
@@ -356,4 +357,205 @@ async function assertCanReviewGuildRequest(userId: string, guildId: string) {
   if (!membership || (membership.role !== "creator" && membership.role !== "admin")) {
     throw new Error("You do not have permission to review requests");
   }
+}
+
+// ── Phrase generation ──────────────────────────────────
+
+function generateJoinPhrase(): string {
+  const words: string[] = [];
+  while (words.length < 3) {
+    const idx = crypto.randomInt(0, PHRASE_WORDS.length);
+    const w = PHRASE_WORDS[idx];
+    if (!words.includes(w)) words.push(w);
+  }
+  return words.join("-");
+}
+
+// ── Guild deletion (owner only) ────────────────────────
+
+export async function deleteGuildAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const guildId = String(formData.get("guildId") ?? "");
+  if (!guildId) throw new Error("Guild is required");
+
+  const [guild] = await db
+    .select({ creatorId: guilds.creatorId })
+    .from(guilds)
+    .where(eq(guilds.id, guildId))
+    .limit(1);
+
+  if (!guild) throw new Error("Guild not found");
+  if (guild.creatorId !== session.user.id) {
+    throw new Error("Only the guild owner can delete a guild");
+  }
+
+  await db.delete(guilds).where(eq(guilds.id, guildId));
+
+  revalidatePath("/guilds");
+  revalidatePath("/quests");
+}
+
+// ── Ownership transfer (owner → admin) ─────────────────
+
+export async function transferGuildOwnershipAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const guildId = String(formData.get("guildId") ?? "");
+  const newOwnerUserId = String(formData.get("newOwnerUserId") ?? "");
+  if (!guildId || !newOwnerUserId) throw new Error("Guild and new owner are required");
+
+  const [guild] = await db
+    .select({ creatorId: guilds.creatorId })
+    .from(guilds)
+    .where(eq(guilds.id, guildId))
+    .limit(1);
+
+  if (!guild) throw new Error("Guild not found");
+  if (guild.creatorId !== session.user.id) {
+    throw new Error("Only the guild owner can transfer ownership");
+  }
+  if (newOwnerUserId === session.user.id) {
+    throw new Error("You are already the owner");
+  }
+
+  // Verify target is a current admin
+  const [targetMember] = await db
+    .select({ role: guildMembers.role })
+    .from(guildMembers)
+    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, newOwnerUserId)))
+    .limit(1);
+
+  if (!targetMember || targetMember.role !== "admin") {
+    throw new Error("New owner must be an admin of this guild");
+  }
+
+  // Update guild creator
+  await db
+    .update(guilds)
+    .set({ creatorId: newOwnerUserId })
+    .where(eq(guilds.id, guildId));
+
+  // Promote new owner to creator role
+  await db
+    .update(guildMembers)
+    .set({ role: "creator" })
+    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, newOwnerUserId)));
+
+  // Demote old owner to admin
+  await db
+    .update(guildMembers)
+    .set({ role: "admin" })
+    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, session.user.id)));
+
+  revalidatePath("/guilds");
+}
+
+// ── Toggle guild visibility (owner only) ───────────────
+
+export async function toggleGuildVisibilityAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const guildId = String(formData.get("guildId") ?? "");
+  if (!guildId) throw new Error("Guild is required");
+
+  const [guild] = await db
+    .select({ creatorId: guilds.creatorId, isPublic: guilds.isPublic })
+    .from(guilds)
+    .where(eq(guilds.id, guildId))
+    .limit(1);
+
+  if (!guild) throw new Error("Guild not found");
+  if (guild.creatorId !== session.user.id) {
+    throw new Error("Only the guild owner can change visibility");
+  }
+
+  const nowPublic = !guild.isPublic;
+
+  await db
+    .update(guilds)
+    .set({
+      isPublic: nowPublic,
+      joinPhrase: nowPublic ? null : generateJoinPhrase(),
+    })
+    .where(eq(guilds.id, guildId));
+
+  revalidatePath("/guilds");
+}
+
+// ── Regenerate join phrase (owner only) ────────────────
+
+export async function regenerateJoinPhraseAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const guildId = String(formData.get("guildId") ?? "");
+  if (!guildId) throw new Error("Guild is required");
+
+  const [guild] = await db
+    .select({ creatorId: guilds.creatorId, isPublic: guilds.isPublic })
+    .from(guilds)
+    .where(eq(guilds.id, guildId))
+    .limit(1);
+
+  if (!guild) throw new Error("Guild not found");
+  if (guild.creatorId !== session.user.id) {
+    throw new Error("Only the guild owner can regenerate the join phrase");
+  }
+  if (guild.isPublic) {
+    throw new Error("Only private guilds have a join phrase");
+  }
+
+  await db
+    .update(guilds)
+    .set({ joinPhrase: generateJoinPhrase() })
+    .where(eq(guilds.id, guildId));
+
+  revalidatePath("/guilds");
+}
+
+// ── Join private guild by name + phrase ────────────────
+
+export async function joinPrivateGuildAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const guildName = String(formData.get("guildName") ?? "").trim();
+  const joinPhrase = String(formData.get("joinPhrase") ?? "").trim().toLowerCase();
+
+  if (!guildName || !joinPhrase) {
+    throw new Error("Guild name and join phrase are required");
+  }
+
+  const [guild] = await db
+    .select({ id: guilds.id, joinPhrase: guilds.joinPhrase, isPublic: guilds.isPublic })
+    .from(guilds)
+    .where(eq(guilds.name, guildName))
+    .limit(1);
+
+  if (!guild || guild.isPublic || guild.joinPhrase !== joinPhrase) {
+    throw new Error("No matching private guild found. Check the name and phrase.");
+  }
+
+  const [existingMember] = await db
+    .select({ id: guildMembers.id })
+    .from(guildMembers)
+    .where(and(eq(guildMembers.guildId, guild.id), eq(guildMembers.userId, session.user.id)))
+    .limit(1);
+
+  if (existingMember) {
+    throw new Error("You are already a member of this guild");
+  }
+
+  await db.insert(guildMembers).values({
+    guildId: guild.id,
+    userId: session.user.id,
+    role: "member",
+  });
+
+  revalidatePath("/guilds");
+  revalidatePath("/quests");
 }

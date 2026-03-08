@@ -178,3 +178,22 @@ export const GUILD_CREST_LABELS: Record<GuildCrestPreset, string> = {
   oak: "Oak",
   wolf: "Wolf",
 };
+
+/** RPG-themed words used to generate private guild join phrases. */
+export const PHRASE_WORDS = [
+  "ember", "shadow", "rune", "forge", "crest", "vale", "iron",
+  "storm", "frost", "flame", "thorn", "crown", "blade", "dawn",
+  "dusk", "ash", "stone", "hawk", "wolf", "oak", "pine", "silver",
+  "bolt", "gale", "moss", "fang", "claw", "bone", "shield", "helm",
+  "torch", "mist", "drake", "wyrm", "shard", "veil", "spire",
+  "hollow", "ridge", "cairn", "sigil", "glyph", "anvil", "scroll",
+  "oracle", "titan", "golem", "raven", "lion", "stag", "viper",
+  "echo", "brine", "rift", "peak", "grove", "basalt", "onyx",
+  "cobalt", "crimson", "verdant", "arcane", "mystic", "primal",
+  "ancient", "eternal", "silent", "hidden", "sacred", "fallen",
+  "wild", "iron", "golden", "obsidian", "crystal", "amber",
+  "sapphire", "ivory", "phantom", "warden", "sentinel", "nomad",
+  "pilgrim", "herald", "arbiter", "keeper", "hunter", "seeker",
+  "wanderer", "champion", "tempest", "summit", "abyss", "zenith",
+  "harbor", "bastion", "citadel", "rampart", "paragon", "spectre",
+] as const;

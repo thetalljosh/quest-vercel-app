@@ -5,6 +5,7 @@ import {
   text,
   integer,
   timestamp,
+  boolean,
   pgEnum,
 } from "drizzle-orm/pg-core";
 
@@ -116,6 +117,8 @@ export const guilds = pgTable("guilds", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   crestPreset: varchar("crest_preset", { length: 40 }).notNull().default("lion"),
+  isPublic: boolean("is_public").notNull().default(true),
+  joinPhrase: varchar("join_phrase", { length: 120 }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 

@@ -37,6 +37,8 @@ export async function getGuildDashboardData(userId: string) {
       description: guilds.description,
       creatorId: guilds.creatorId,
       crestPreset: guilds.crestPreset,
+      isPublic: guilds.isPublic,
+      joinPhrase: guilds.joinPhrase,
       createdAt: guilds.createdAt,
       role: guildMembers.role,
       creatorName: users.name,
@@ -105,6 +107,7 @@ export async function getGuildDashboardData(userId: string) {
     .innerJoin(users, eq(guilds.creatorId, users.id))
     .where(
       and(
+        eq(guilds.isPublic, true),
         ne(guilds.creatorId, userId),
         sql`not exists (
           select 1

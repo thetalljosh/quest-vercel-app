@@ -3,9 +3,14 @@ import { redirect } from "next/navigation";
 import {
   approveGuildJoinRequestAction,
   createGuildAction,
+  deleteGuildAction,
+  joinPrivateGuildAction,
+  regenerateJoinPhraseAction,
   rejectGuildJoinRequestAction,
   requestJoinGuildAction,
   setGuildMemberRoleAction,
+  toggleGuildVisibilityAction,
+  transferGuildOwnershipAction,
 } from "./actions";
 import {
   getCreatorGuildMemberRoster,
@@ -15,6 +20,7 @@ import {
 import { GUILD_CREST_LABELS, GUILD_CREST_PRESETS } from "@/shared/lib/constants";
 import { GuildCrest } from "@/features/guilds/components/GuildCrest";
 import { GuildTraitRadar } from "@/features/guilds/components/GuildTraitRadar";
+import { ConfirmButton } from "@/features/guilds/components/ConfirmButton";
 
 interface GuildsPageProps {
   searchParams: Promise<{ creator?: string; approved?: string }>;
@@ -99,22 +105,81 @@ export default async function GuildsPage({ searchParams }: GuildsPageProps) {
           <p className="text-sm text-[var(--muted-text)]">No guilds for this filter yet.</p>
         ) : (
           <ul className="grid gap-3 md:grid-cols-2">
-            {filteredGuilds.map((guild) => (
-              <li key={guild.id} className="parchment-sunken rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <GuildCrest preset={guild.crestPreset} />
-                  <div>
-                    <p className="rpg-heading text-lg">{guild.name}</p>
-                    <p className="text-xs text-[var(--muted-text)]">
-                      Role: {guild.role} • Creator: {guild.creatorName ?? guild.creatorEmail}
-                    </p>
+            {filteredGuilds.map((guild) => {
+              const isOwner = guild.creatorId === userId;
+
+              return (
+                <li key={guild.id} className="parchment-sunken rounded-lg p-3">
+                  <div className="flex items-center gap-3">
+                    <GuildCrest preset={guild.crestPreset} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="rpg-heading text-lg">{guild.name}</p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                            guild.isPublic
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-amber-500/20 text-amber-300"
+                          }`}
+                        >
+                          {guild.isPublic ? "Public" : "Private"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--muted-text)]">
+                        Role: {guild.role} • Creator: {guild.creatorName ?? guild.creatorEmail}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                {guild.description && (
-                  <p className="mt-2 text-sm text-[var(--muted-text)]">{guild.description}</p>
-                )}
-              </li>
-            ))}
+                  {guild.description && (
+                    <p className="mt-2 text-sm text-[var(--muted-text)]">{guild.description}</p>
+                  )}
+
+                  {/* Private guild join phrase (visible to owner only) */}
+                  {isOwner && !guild.isPublic && guild.joinPhrase && (
+                    <div className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
+                      <p className="text-[10px] uppercase tracking-wider text-amber-300">
+                        Join Phrase
+                      </p>
+                      <p className="mt-0.5 font-mono text-sm text-amber-200">
+                        {guild.joinPhrase}
+                      </p>
+                      <form action={regenerateJoinPhraseAction} className="mt-1">
+                        <input type="hidden" name="guildId" value={guild.id} />
+                        <button
+                          type="submit"
+                          className="text-[10px] uppercase tracking-wider text-amber-400 underline hover:text-amber-300"
+                        >
+                          Regenerate
+                        </button>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Owner controls */}
+                  {isOwner && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <form action={toggleGuildVisibilityAction}>
+                        <input type="hidden" name="guildId" value={guild.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs hover:bg-[var(--border)]"
+                        >
+                          Make {guild.isPublic ? "Private" : "Public"}
+                        </button>
+                      </form>
+                      <ConfirmButton
+                        action={deleteGuildAction}
+                        hiddenFields={{ guildId: guild.id }}
+                        confirmMessage="Are you sure you want to delete this guild? This cannot be undone."
+                        className="rounded-md border border-red-500/40 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10"
+                      >
+                        Delete Guild
+                      </ConfirmButton>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -177,6 +242,31 @@ export default async function GuildsPage({ searchParams }: GuildsPageProps) {
         <div className="parchment-card rounded-xl p-5">
           <h2 className="rpg-heading text-xl">Discover Guilds</h2>
           <div className="ornamental-divider my-3" />
+
+          {/* Join private guild form */}
+          <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-300">
+              Join a Private Guild
+            </p>
+            <form action={joinPrivateGuildAction} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <input
+                name="guildName"
+                required
+                placeholder="Guild name"
+                className="rpg-input text-sm"
+              />
+              <input
+                name="joinPhrase"
+                required
+                placeholder="Join phrase (e.g. ember-forge-summit)"
+                className="rpg-input text-sm"
+              />
+              <button type="submit" className="rpg-button px-3 py-1.5 text-xs whitespace-nowrap">
+                Join
+              </button>
+            </form>
+          </div>
+
           {data.discoverGuilds.length === 0 ? (
             <p className="text-sm text-[var(--muted-text)]">No public guilds available to join.</p>
           ) : (
@@ -246,18 +336,31 @@ export default async function GuildsPage({ searchParams }: GuildsPageProps) {
                       </div>
 
                       {member.role !== "creator" && (
-                        <form action={setGuildMemberRoleAction}>
-                          <input type="hidden" name="guildId" value={guild.id} />
-                          <input type="hidden" name="memberUserId" value={member.userId} />
-                          <input
-                            type="hidden"
-                            name="role"
-                            value={member.role === "admin" ? "member" : "admin"}
-                          />
-                          <button type="submit" className="rpg-button px-3 py-1.5 text-xs">
-                            {member.role === "admin" ? "Demote to Member" : "Promote to Admin"}
-                          </button>
-                        </form>
+                        <div className="flex gap-2">
+                          <form action={setGuildMemberRoleAction}>
+                            <input type="hidden" name="guildId" value={guild.id} />
+                            <input type="hidden" name="memberUserId" value={member.userId} />
+                            <input
+                              type="hidden"
+                              name="role"
+                              value={member.role === "admin" ? "member" : "admin"}
+                            />
+                            <button type="submit" className="rpg-button px-3 py-1.5 text-xs">
+                              {member.role === "admin" ? "Demote to Member" : "Promote to Admin"}
+                            </button>
+                          </form>
+
+                          {member.role === "admin" && (
+                            <ConfirmButton
+                              action={transferGuildOwnershipAction}
+                              hiddenFields={{ guildId: guild.id, newOwnerUserId: member.userId }}
+                              confirmMessage="Transfer ownership to this admin? You will be demoted to admin."
+                              className="rounded-md border border-amber-500/40 px-3 py-1.5 text-xs text-amber-400 hover:bg-amber-500/10"
+                            >
+                              Transfer Ownership
+                            </ConfirmButton>
+                          )}
+                        </div>
                       )}
                     </li>
                   ))}

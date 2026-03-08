@@ -8,6 +8,8 @@ export interface Guild {
   creatorName: string | null;
   creatorEmail: string;
   crestPreset: GuildCrestPreset;
+  isPublic: boolean;
+  joinPhrase: string | null;
   createdAt: Date;
 }
 
