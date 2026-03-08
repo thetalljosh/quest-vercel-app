@@ -19,6 +19,7 @@ import {
 interface QuestLogViewProps {
   quests: Quest[];
   onMoveQuest: (questId: string, newStatus: QuestStatus) => void;
+  onDeleteQuest?: (questId: string) => void;
   onUpdateQuestMeta?: (
     questId: string,
     questType: QuestType,
@@ -39,6 +40,7 @@ type QuestLogTab = "current" | "archive";
 export function QuestLogView({
   quests,
   onMoveQuest,
+  onDeleteQuest,
   onUpdateQuestMeta,
 }: QuestLogViewProps) {
   const [activeTab, setActiveTab] = useState<QuestLogTab>("current");
@@ -227,6 +229,22 @@ export function QuestLogView({
                   {QUEST_STATUS_LABELS[status]}
                 </button>
               ))}
+
+              {onDeleteQuest && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const confirmed = window.confirm(
+                      "Delete this quest permanently? This cannot be undone."
+                    );
+                    if (!confirmed) return;
+                    onDeleteQuest(selectedQuest.id);
+                  }}
+                  className="rounded-md border border-red-600/40 bg-red-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-red-700"
+                >
+                  Delete Quest
+                </button>
+              )}
             </div>
           </>
         )}

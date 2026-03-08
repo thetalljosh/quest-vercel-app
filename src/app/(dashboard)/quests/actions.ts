@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/shared/db/client";
-import { quests, questLogs, profiles, guildMembers } from "@/shared/db/schema";
+import { quests, questLogs } from "@/shared/db/schema";
 import { auth } from "@/features/auth/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -13,9 +13,12 @@ import {
 } from "@/shared/lib/constants";
 import {
   calculateXpReward,
-  checkLevelUp,
-  distributeStatPoints,
+  awardXpForQuest,
 } from "@/features/character/lib/xpEngine";
+import {
+  assertCanEditQuest,
+  logStatusChange,
+} from "@/features/quests/lib/questHelpers";
 
 export async function moveQuestAction(
   questId: string,
@@ -33,8 +36,6 @@ export async function moveQuestAction(
   if (!quest) throw new Error("Quest not found");
   await assertCanEditQuest(session.user.id, quest.userId, quest.guildId);
 
-  const wasClosed = isClosedStatus(quest.status);
-  const reopening = wasClosed && !isClosedStatus(newStatus);
   const becomingCompleted = newStatus === "completed";
 
   const [lastCompletion] = await db
@@ -56,10 +57,7 @@ export async function moveQuestAction(
     .where(eq(quests.id, questId));
 
   if (shouldAwardXp) {
-    await awardXp(session.user.id, {
-      xpReward: quest.xpReward,
-      questType: quest.questType,
-    });
+    await awardXpForQuest(session.user.id, { xpReward: quest.xpReward });
   }
 
   await logStatusChange(
@@ -120,86 +118,4 @@ export async function updateQuestCardMetaAction(
   });
 
   revalidatePath("/quests");
-}
-
-async function awardXp(
-  userId: string,
-  quest: { xpReward: number; questType: QuestType }
-) {
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, userId))
-    .limit(1);
-
-  if (!profile) return;
-
-  const newTotal = profile.totalXp + quest.xpReward;
-  const newCurrent = profile.currentXp + quest.xpReward;
-  const { newLevel } = checkLevelUp(profile.level, newTotal);
-  const stats = distributeStatPoints(quest.questType);
-
-  await db
-    .update(profiles)
-    .set({
-      totalXp: newTotal,
-      currentXp: newCurrent,
-      level: newLevel,
-      statStamina: profile.statStamina + stats.stamina,
-      statIntellect: profile.statIntellect + stats.intellect,
-      statWillpower: profile.statWillpower + stats.willpower,
-    })
-    .where(eq(profiles.id, userId));
-}
-
-async function logStatusChange(
-  questId: string,
-  userId: string,
-  oldStatus: QuestStatus,
-  status: QuestStatus,
-  xpAwarded: number | null
-) {
-  const reopening = isClosedStatus(oldStatus) && !isClosedStatus(status);
-
-  const action = reopening
-    ? "reopened"
-    : status === "completed"
-      ? "completed"
-      : status === "failed"
-        ? "failed"
-        : "moved";
-
-  await db.insert(questLogs).values({
-    questId,
-    userId,
-    action,
-    xpAwarded,
-  });
-}
-
-function isClosedStatus(status: QuestStatus): boolean {
-  return status === "completed" || status === "failed";
-}
-
-async function assertCanEditQuest(
-  actingUserId: string,
-  ownerUserId: string,
-  guildId: string | null
-) {
-  if (!guildId) {
-    if (actingUserId !== ownerUserId) {
-      throw new Error("You do not have permission to edit this quest");
-    }
-    return;
-  }
-
-  const [membership] = await db
-    .select({ id: guildMembers.id })
-    .from(guildMembers)
-    .where(and(eq(guildMembers.guildId, guildId), eq(guildMembers.userId, actingUserId)))
-    .limit(1);
-
-  if (!membership) {
-    throw new Error("You are not a member of this guild");
-  }
 }

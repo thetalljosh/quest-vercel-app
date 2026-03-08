@@ -3,6 +3,7 @@ import { getQuestsByUser } from "@/features/quests/lib/queries";
 import { QuestLogWrapper } from "@/features/quests/components/QuestLogWrapper";
 import { QuestForm } from "@/features/quests/components/QuestForm";
 import { moveQuestAction, updateQuestCardMetaAction } from "./actions";
+import { deleteQuest } from "@/features/quests/actions/deleteQuest";
 import { getUserGuildOptions } from "@/features/guilds/lib/queries";
 
 export default async function QuestsPage() {
@@ -22,6 +23,7 @@ export default async function QuestsPage() {
         initialQuests={quests}
         guildOptions={guildOptions}
         moveAction={moveQuestAction}
+        deleteAction={deleteQuest}
         updateMetaAction={updateQuestCardMetaAction}
       />
 

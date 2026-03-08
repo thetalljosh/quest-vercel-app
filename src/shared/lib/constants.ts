@@ -70,6 +70,9 @@ export const STAT_NAMES = [
   "stamina",
   "intellect",
   "willpower",
+  "charisma",
+  "curiosity",
+  "perception",
 ] as const;
 
 export type StatName = (typeof STAT_NAMES)[number];
@@ -92,14 +95,22 @@ export const PRIORITY_MULTIPLIERS: Record<QuestPriority, number> = {
   critical: 2,
 };
 
-/** Stat point increments awarded per quest type completion. */
-export const STAT_REWARDS: Record<QuestType, Record<StatName, number>> = {
-  main: { stamina: 1, intellect: 2, willpower: 2 },
-  character: { stamina: 0, intellect: 1, willpower: 2 },
-  event: { stamina: 2, intellect: 1, willpower: 1 },
-  world: { stamina: 1, intellect: 2, willpower: 0 },
-  side: { stamina: 1, intellect: 1, willpower: 0 },
-  commission: { stamina: 1, intellect: 0, willpower: 0 },
+export const STAT_LABELS: Record<StatName, string> = {
+  stamina: "Stamina",
+  intellect: "Intellect",
+  willpower: "Willpower",
+  charisma: "Charisma",
+  curiosity: "Curiosity",
+  perception: "Perception",
+};
+
+export const STAT_COLORS: Record<StatName, string> = {
+  stamina: "bg-red-500",
+  intellect: "bg-blue-500",
+  willpower: "bg-purple-500",
+  charisma: "bg-pink-500",
+  curiosity: "bg-emerald-500",
+  perception: "bg-amber-500",
 };
 
 /** Kanban columns in display order. */

@@ -1,13 +1,13 @@
 "use server";
 
 import { db } from "@/shared/db/client";
-import { quests, questLogs, guildMembers } from "@/shared/db/schema";
+import { quests } from "@/shared/db/schema";
 import { auth } from "@/features/auth/lib/auth";
 import { questCreateSchema } from "@/features/quests/types/schemas";
 import { calculateXpReward } from "@/features/character/lib/xpEngine";
 import { revalidatePath } from "next/cache";
 import type { QuestType, QuestPriority } from "@/shared/lib/constants";
-import { and, eq } from "drizzle-orm";
+import { assertCanEditQuest, insertQuestLog } from "@/features/quests/lib/questHelpers";
 
 export async function createQuest(formData: FormData) {
   const session = await auth();
@@ -29,20 +29,7 @@ export async function createQuest(formData: FormData) {
   );
 
   if (parsed.guildId) {
-    const [membership] = await db
-      .select({ id: guildMembers.id })
-      .from(guildMembers)
-      .where(
-        and(
-          eq(guildMembers.guildId, parsed.guildId),
-          eq(guildMembers.userId, session.user.id)
-        )
-      )
-      .limit(1);
-
-    if (!membership) {
-      throw new Error("You are not a member of this guild");
-    }
+    await assertCanEditQuest(session.user.id, session.user.id, parsed.guildId);
   }
 
   const [quest] = await db
@@ -62,18 +49,4 @@ export async function createQuest(formData: FormData) {
   await insertQuestLog(quest.id, session.user.id, "created");
   revalidatePath("/quests");
   return quest;
-}
-
-async function insertQuestLog(
-  questId: string,
-  userId: string,
-  action: string,
-  xpAwarded?: number
-) {
-  await db.insert(questLogs).values({
-    questId,
-    userId,
-    action,
-    xpAwarded: xpAwarded ?? null,
-  });
 }

@@ -9,10 +9,12 @@ import {
 } from "./actions";
 import {
   getCreatorGuildMemberRoster,
+  getGuildCombinedTraits,
   getGuildDashboardData,
 } from "@/features/guilds/lib/queries";
 import { GUILD_CREST_LABELS, GUILD_CREST_PRESETS } from "@/shared/lib/constants";
 import { GuildCrest } from "@/features/guilds/components/GuildCrest";
+import { GuildTraitRadar } from "@/features/guilds/components/GuildTraitRadar";
 
 interface GuildsPageProps {
   searchParams: Promise<{ creator?: string; approved?: string }>;
@@ -31,6 +33,7 @@ export default async function GuildsPage({ searchParams }: GuildsPageProps) {
 
   const data = await getGuildDashboardData(session.user.id);
   const creatorGuildRosters = await getCreatorGuildMemberRoster(userId);
+  const guildTraitData = await getGuildCombinedTraits(data.myGuilds.map((guild) => guild.id));
 
   const filteredGuilds = data.myGuilds.filter((guild) => {
     if (creatorFilter === "self") {
@@ -115,6 +118,32 @@ export default async function GuildsPage({ searchParams }: GuildsPageProps) {
           </ul>
         )}
       </div>
+
+      {guildTraitData.length > 0 && (
+        <div className="parchment-card rounded-xl p-5">
+          <h2 className="rpg-heading text-xl">Guild Trait Radar</h2>
+          <p className="mt-1 text-sm text-[var(--muted-text)]">
+            Compare total guild traits and per-member averages.
+          </p>
+          <div className="ornamental-divider my-3" />
+
+          <div className="space-y-3">
+            {data.myGuilds.map((guild) => {
+              const stats = guildTraitData.find((entry) => entry.guildId === guild.id);
+              if (!stats) return null;
+
+              return (
+                <GuildTraitRadar
+                  key={guild.id}
+                  guildName={guild.name}
+                  memberCount={stats.memberCount}
+                  totals={stats.totals}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="parchment-card rounded-xl p-5">

@@ -98,9 +98,13 @@ export const profiles = pgTable("profiles", {
   level: integer("level").notNull().default(1),
   currentXp: integer("current_xp").notNull().default(0),
   totalXp: integer("total_xp").notNull().default(0),
-  statStamina: integer("stat_stamina").notNull().default(5),
-  statIntellect: integer("stat_intellect").notNull().default(5),
-  statWillpower: integer("stat_willpower").notNull().default(5),
+  unspentStatPoints: integer("unspent_stat_points").notNull().default(12),
+  statStamina: integer("stat_stamina").notNull().default(0),
+  statIntellect: integer("stat_intellect").notNull().default(0),
+  statWillpower: integer("stat_willpower").notNull().default(0),
+  statCharisma: integer("stat_charisma").notNull().default(0),
+  statCuriosity: integer("stat_curiosity").notNull().default(0),
+  statPerception: integer("stat_perception").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 

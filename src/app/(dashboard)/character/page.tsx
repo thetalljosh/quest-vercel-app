@@ -5,7 +5,10 @@ import {
   getRecentQuestLogs,
 } from "@/features/character/lib/queries";
 import { CharacterSheet } from "@/features/character/components/CharacterSheet";
+import { TraitAllocationPanel } from "@/features/character/components/TraitAllocationPanel";
+import { allocateTraitPoints } from "@/features/character/actions";
 import { formatDate } from "@/shared/lib/utils";
+import { redirect } from "next/navigation";
 
 export default async function CharacterPage() {
   const session = await auth();
@@ -13,6 +16,18 @@ export default async function CharacterPage() {
 
   const profile = await getProfile(session.user.id);
   if (!profile) return <p>No character found. Complete a quest to begin!</p>;
+
+  const totalTraits =
+    profile.statStamina +
+    profile.statIntellect +
+    profile.statWillpower +
+    profile.statCharisma +
+    profile.statCuriosity +
+    profile.statPerception;
+
+  if (totalTraits === 0 && profile.unspentStatPoints >= 12) {
+    redirect("/character/create");
+  }
 
   const logs = await getRecentQuestLogs(session.user.id);
   const completionStreak = await getCompletionStreak(session.user.id);
@@ -46,6 +61,18 @@ export default async function CharacterPage() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {profile.unspentStatPoints > 0 && (
+            <div className="mt-6">
+              <TraitAllocationPanel
+                availablePoints={profile.unspentStatPoints}
+                title="Allocate Level-Up Points"
+                description="Spend points earned from leveling up to customize your traits."
+                submitLabel="Apply Trait Points"
+                action={allocateTraitPoints}
+              />
+            </div>
           )}
         </div>
       </div>

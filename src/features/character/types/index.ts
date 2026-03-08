@@ -6,8 +6,12 @@ export interface Profile {
   level: number;
   currentXp: number;
   totalXp: number;
+  unspentStatPoints: number;
   statStamina: number;
   statIntellect: number;
   statWillpower: number;
+  statCharisma: number;
+  statCuriosity: number;
+  statPerception: number;
   createdAt: Date;
 }

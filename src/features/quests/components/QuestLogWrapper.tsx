@@ -20,6 +20,7 @@ interface QuestLogWrapperProps {
   initialQuests: Quest[];
   guildOptions: GuildOption[];
   moveAction: (questId: string, newStatus: QuestStatus) => Promise<number>;
+  deleteAction: (questId: string) => Promise<void>;
   updateMetaAction: (
     questId: string,
     questType: QuestType,
@@ -35,7 +36,8 @@ type OptimisticUpdate =
       questType: QuestType;
       priority: QuestPriority;
       xpReward: number;
-    };
+    }
+  | { kind: "delete"; questId: string };
 type QuestView = "log" | "kanban";
 const STORAGE_KEY = "quest-view";
 const CLOSED_KEY = "show-closed-kanban";
@@ -46,6 +48,7 @@ export function QuestLogWrapper({
   initialQuests,
   guildOptions,
   moveAction,
+  deleteAction,
   updateMetaAction,
 }: QuestLogWrapperProps) {
   const [isPending, startTransition] = useTransition();
@@ -84,6 +87,10 @@ export function QuestLogWrapper({
         return state.map((quest) =>
           quest.id === update.questId ? { ...quest, status: update.newStatus } : quest
         );
+      }
+
+      if (update.kind === "delete") {
+        return state.filter((quest) => quest.id !== update.questId);
       }
 
       return state.map((quest) =>
@@ -131,6 +138,17 @@ export function QuestLogWrapper({
 
       if (xpAwarded > 0) {
         setToastMessage(`+${xpAwarded} XP gained`);
+      }
+    });
+  }
+
+  function handleDeleteQuest(questId: string) {
+    addOptimistic({ kind: "delete", questId });
+    startTransition(async () => {
+      try {
+        await deleteAction(questId);
+      } catch {
+        setToastMessage("Could not delete quest. Refresh and try again.");
       }
     });
   }
@@ -276,6 +294,7 @@ export function QuestLogWrapper({
         <QuestLogView
           quests={visibleByScope}
           onMoveQuest={handleMoveQuest}
+          onDeleteQuest={handleDeleteQuest}
           onUpdateQuestMeta={handleUpdateQuestMeta}
         />
       ) : (

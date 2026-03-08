@@ -3,6 +3,7 @@ import {
   guilds,
   guildMembers,
   guildJoinRequests,
+  profiles,
   users,
 } from "@/shared/db/schema";
 import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
@@ -135,16 +136,6 @@ export async function getGuildDashboardData(userId: string) {
   };
 }
 
-export async function isGuildMember(userId: string, guildId: string) {
-  const [row] = await db
-    .select({ id: guildMembers.id })
-    .from(guildMembers)
-    .where(and(eq(guildMembers.userId, userId), eq(guildMembers.guildId, guildId)))
-    .limit(1);
-
-  return Boolean(row);
-}
-
 export async function getUserGuildRole(userId: string, guildId: string) {
   const [row] = await db
     .select({ role: guildMembers.role })
@@ -197,4 +188,53 @@ export async function getCreatorGuildMemberRoster(creatorUserId: string) {
         userEmail: member.userEmail,
       })),
   }));
+}
+
+export async function getGuildCombinedTraits(guildIds: string[]) {
+  if (!guildIds.length) {
+    return [];
+  }
+
+  const rows = await db
+    .select({
+      guildId: guildMembers.guildId,
+      statStamina: profiles.statStamina,
+      statIntellect: profiles.statIntellect,
+      statWillpower: profiles.statWillpower,
+      statCharisma: profiles.statCharisma,
+      statCuriosity: profiles.statCuriosity,
+      statPerception: profiles.statPerception,
+    })
+    .from(guildMembers)
+    .innerJoin(profiles, eq(guildMembers.userId, profiles.id))
+    .where(inArray(guildMembers.guildId, guildIds));
+
+  return guildIds.map((guildId) => {
+    const members = rows.filter((row) => row.guildId === guildId);
+
+    const totals = members.reduce(
+      (acc, member) => ({
+        stamina: acc.stamina + member.statStamina,
+        intellect: acc.intellect + member.statIntellect,
+        willpower: acc.willpower + member.statWillpower,
+        charisma: acc.charisma + member.statCharisma,
+        curiosity: acc.curiosity + member.statCuriosity,
+        perception: acc.perception + member.statPerception,
+      }),
+      {
+        stamina: 0,
+        intellect: 0,
+        willpower: 0,
+        charisma: 0,
+        curiosity: 0,
+        perception: 0,
+      }
+    );
+
+    return {
+      guildId,
+      memberCount: members.length,
+      totals,
+    };
+  });
 }

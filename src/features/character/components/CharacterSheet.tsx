@@ -3,6 +3,7 @@ import { xpThresholdForLevel } from "@/features/character/lib/xpEngine";
 import { LevelBadge } from "./LevelBadge";
 import { XpProgressBar } from "./XpProgressBar";
 import { StatBar } from "./StatBar";
+import { STAT_COLORS, STAT_LABELS, STAT_NAMES } from "@/shared/lib/constants";
 
 interface CharacterSheetProps {
   profile: Profile;
@@ -32,22 +33,31 @@ export function CharacterSheet({ profile, completionStreak }: CharacterSheetProp
         </p>
       </div>
 
+      <div className="mt-3 parchment-sunken rounded-lg px-3 py-2">
+        <p className="rpg-subhead">Unspent Trait Points</p>
+        <p className="rpg-heading mt-1 text-lg">✨ {profile.unspentStatPoints}</p>
+      </div>
+
       <div className="mt-6 flex flex-col gap-3">
-        <StatBar
-          label="Stamina"
-          value={profile.statStamina}
-          color="bg-red-500"
-        />
-        <StatBar
-          label="Intellect"
-          value={profile.statIntellect}
-          color="bg-blue-500"
-        />
-        <StatBar
-          label="Willpower"
-          value={profile.statWillpower}
-          color="bg-purple-500"
-        />
+        {STAT_NAMES.map((stat) => {
+          const valueByStat = {
+            stamina: profile.statStamina,
+            intellect: profile.statIntellect,
+            willpower: profile.statWillpower,
+            charisma: profile.statCharisma,
+            curiosity: profile.statCuriosity,
+            perception: profile.statPerception,
+          };
+
+          return (
+            <StatBar
+              key={stat}
+              label={STAT_LABELS[stat]}
+              value={valueByStat[stat]}
+              color={STAT_COLORS[stat]}
+            />
+          );
+        })}
       </div>
     </div>
   );

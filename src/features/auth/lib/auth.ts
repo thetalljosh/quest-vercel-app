@@ -55,6 +55,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       await db.insert(profiles).values({
         id: user.id,
         displayName: user.name ?? "Adventurer",
+        unspentStatPoints: 12,
+        statStamina: 0,
+        statIntellect: 0,
+        statWillpower: 0,
+        statCharisma: 0,
+        statCuriosity: 0,
+        statPerception: 0,
       });
     },
   },
