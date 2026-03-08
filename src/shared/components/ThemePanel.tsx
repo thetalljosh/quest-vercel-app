@@ -22,9 +22,9 @@ export function ThemePanel() {
   const { mode, accent, font, toggleMode, setAccent, setFont } = useTheme();
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+    <div className="fixed right-3 bottom-3 z-50 flex flex-col items-end gap-2 md:right-4 md:bottom-4">
       {open && (
-        <div className="w-64 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)]/95 p-4 shadow-xl backdrop-blur-sm">
+        <div className="w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)]/95 p-4 shadow-xl backdrop-blur-sm">
           <div className="mb-3 flex items-center justify-between">
             <p className="rpg-subhead">Display</p>
             <button

@@ -46,7 +46,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${ebGaramond.variable} ${lexend.variable}`}
     >
-      <body className="antialiased">
+      <body className="overflow-x-hidden antialiased">
         <ThemeProvider>
           {children}
           <ThemePanel />
