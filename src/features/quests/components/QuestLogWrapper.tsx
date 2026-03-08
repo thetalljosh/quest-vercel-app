@@ -115,6 +115,11 @@ export function QuestLogWrapper({
       return activeGuildId ? quest.guildId === activeGuildId : false;
     }
 
+    // combined — show all, or filter to a specific guild + personal
+    if (activeGuildId) {
+      return !quest.guildId || quest.guildId === activeGuildId;
+    }
+
     return true;
   });
 
