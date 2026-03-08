@@ -11,10 +11,8 @@ import {
   QUEST_TYPES,
   type QuestPriority,
 } from "@/shared/lib/constants";
-import {
-  calculateXpReward,
-  awardXpForQuest,
-} from "@/features/character/lib/xpEngine";
+import { calculateXpReward } from "@/features/character/lib/xpEngine";
+import { awardXpForQuest } from "@/features/character/lib/xpEngine.server";
 import {
   assertCanEditQuest,
   logStatusChange,
