@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Atkinson_Hyperlegible, Cinzel, EB_Garamond, Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { ThemePanel } from "@/shared/components/ThemePanel";
 import "./globals.css";
@@ -51,6 +52,7 @@ export default function RootLayout({
           {children}
           <ThemePanel />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
